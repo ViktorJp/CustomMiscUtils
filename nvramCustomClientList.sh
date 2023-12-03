@@ -283,7 +283,7 @@ _NVRAM_ModifyVar_()
        #
        elif nvram set ${NVRAM_VarKeyName}="$(cat "$tempFile")"
        then
-           printf "\n*NEW_ Modified NVRAM Value:\n---------------------------"
+           printf "\n*NEW* Modified NVRAM Value:\n---------------------------"
            _NVRAM_ShowVar_ ; nvram commit
            printf "Modification is completed.\n\n"
        fi
