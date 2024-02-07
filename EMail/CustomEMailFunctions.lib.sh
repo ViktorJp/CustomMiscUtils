@@ -8,7 +8,7 @@
 #
 # Creation Date: 2020-Jun-11 [Martinski W.]
 # Last Modified: 2024-Feb-06 [Martinski W.]
-# Version: 0.9.2
+# Version: 0.9.3
 ######################################################################
 
 if [ -z "${_LIB_CustomEMailFunctions_SHELL_:+xSETx}" ]
@@ -50,7 +50,12 @@ cemIsInteractive=false
 FROM_NAME=""  TO_NAME=""  FROM_ADDRESS=""  TO_ADDRESS=""
 USERNAME=""  SMTP=""  PORT=""  PROTOCOL=""  emailPwEnc=""  PASSWORD=""
 
-[ -f "$amtmEMailConfFile" ] && . "$amtmEMailConfFile"
+if [ -f "$amtmEMailConfFile" ]
+then
+    . "$amtmEMailConfFile"
+else
+    cemSendEMailNotificationsFlag=false
+fi
 
 #-----------------------------------------------------------#
 _LogMsg_CEM_()
