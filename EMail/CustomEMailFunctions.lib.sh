@@ -7,8 +7,8 @@
 # email notifications using AMTM optional email config.
 #
 # Creation Date: 2020-Jun-11 [Martinski W.]
-# Last Modified: 2024-Feb-03 [Martinski W.]
-# Version: 0.9.1
+# Last Modified: 2024-Feb-06 [Martinski W.]
+# Version: 0.9.2
 ######################################################################
 
 if [ -z "${_LIB_CustomEMailFunctions_SHELL_:+xSETx}" ]
@@ -142,7 +142,7 @@ Content-Type: text/html; charset="UTF-8"
 EOF
 
    ## Body ##
-   echo "$emailBodyMsg" >> "$cemTempEMailContent"
+   printf "${emailBodyMsg}\n" >> "$cemTempEMailContent"
 
    ## Footer ##
    cat <<EOF >> "$cemTempEMailContent"
