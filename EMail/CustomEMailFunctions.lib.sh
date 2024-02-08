@@ -134,6 +134,7 @@ _CheckLibraryUpdates_CEM_()
    then retCode=1  #NO Updates#
    else retCode=0  #NEW Update#
    fi
+   rm -f "$theVersTextFile"
    "$cemIsInteractive" && "$showMsg" && printf "\nDone.\n"
 
    return "$retCode"
