@@ -99,7 +99,8 @@ _CheckLibraryUpdates_CEM_()
        return 0
    fi
    local theVersTextFile="${1}/$CEM_TXT_VERFILE"
-   local libraryVersNum  dlCheckVersNum  showMsg  retCode
+   local libraryVerNum  dlCheckVerNum  dlCheckVerStr
+   local showMsg  retCode
 
    if [ $# -gt 1 ] && [ "$2" = "quiet" ]
    then showMsg=false ; else showMsg=true ; fi
@@ -109,23 +110,27 @@ _CheckLibraryUpdates_CEM_()
 
    curl -kLSs --retry 3 --retry-delay 5 --retry-connrefused \
    "${CEM_LIB_SCRIPT_URL}/$CEM_TXT_VERFILE" -o "$theVersTextFile"
-   chmod 666 "$theVersTextFile"
 
    [ ! -f "$theVersTextFile" ] && return 1
+   chmod 666 "$theVersTextFile"
+   dlCheckVerStr="$(cat "$theVersTextFile")"
 
-   libraryVersNum="$(_VersionStrToNum_ "$CEM_LIB_VERSION")"
-   dlCheckVersNum="$(_VersionStrToNum_ "$(cat "$theVersTextFile")")"
+   dlCheckVerNum="$(_VersionStrToNum_ "$dlCheckVerStr")"
+   libraryVerNum="$(_VersionStrToNum_ "$CEM_LIB_VERSION")"
 
-   if [ "$dlCheckVersNum" -le "$libraryVersNum" ]
+   if [ "$dlCheckVerNum" -le "$libraryVerNum" ]
    then
-       retCode=1  #NO Updates#
+       retCode=1
+       "$cemIsInteractive" && "$showMsg" && \
+       printf "\nDone.\n"
    else
        _DoReInit_CEM_
-       retCode=0  #NEW Update#
+       retCode=0
+       "$cemIsInteractive" && "$showMsg" && \
+       printf "\nNew library version update [$dlCheckVerStr] available.\n"
    fi
-   rm -f "$theVersTextFile"
-   "$cemIsInteractive" && "$showMsg" && printf "\nDone [$retCode].\n"
 
+   rm -f "$theVersTextFile"
    return "$retCode"
 }
 
@@ -236,10 +241,9 @@ _SendEMailNotification_CEM_()
    then return 1 ; fi
 
    local retCode  logTag  logMsg
-   local theRouterModel="$(_GetRouterModelID_CEM_)"
 
    [ -z "$FROM_NAME" ] && FROM_NAME="$cemScriptFNameTag"
-   [ -z "$FRIENDLY_ROUTER_NAME" ] && FRIENDLY_ROUTER_NAME="$theRouterModel"
+   [ -z "$FRIENDLY_ROUTER_NAME" ] && FRIENDLY_ROUTER_NAME="$(_GetRouterModelID_CEM_)"
 
    ! _CreateEMailContent_CEM_ "$@" && return 1
 
@@ -251,13 +255,14 @@ _SendEMailNotification_CEM_()
 
    date +"$cemDateTimeFormat" > "$cemTempEMailLogFile"
 
-   /usr/sbin/curl -v --url ${PROTOCOL}://${SMTP}:${PORT} \
+   /usr/sbin/curl -v --url "${PROTOCOL}://${SMTP}:${PORT}" \
    --mail-from "$FROM_ADDRESS" --mail-rcpt "$TO_ADDRESS" \
    --user "${USERNAME}:$(/usr/sbin/openssl aes-256-cbc "$emailPwEnc" -d -in "$amtmEMailPswdFile" -pass pass:ditbabot,isoi)" \
    --upload-file "$cemTempEMailContent" \
    $SSL_FLAG --ssl-reqd --crlf >> "$cemTempEMailLogFile" 2>&1
+   curlCode="$?"
 
-   if [ $? -eq 0 ]
+   if [ "$curlCode" -eq 0 ]
    then
        sleep 2
        retCode=0
@@ -268,7 +273,7 @@ _SendEMailNotification_CEM_()
    else
        retCode=1
        logTag="$cemLogErrorTag"
-       logMsg="**ERROR**: Failure to send email notification."
+       logMsg="**ERROR**: Failure to send email notification [$curlCode]."
    fi
    _LogMsg_CEM_ "$logTag" "$logMsg"
 
