@@ -6,9 +6,9 @@
 # A simple example.
 #
 # Creation Date: 2020-Jun-11 [Martinski W.]
-# Last Modified: 2024-Feb-07 [Martinski W.]
+# Last Modified: 2024-Feb-08 [Martinski W.]
 ####################################################################
-TEST_VERSION="0.5.2"
+TEST_VERSION="0.5.3"
 
 readonly scriptFileName="${0##*/}"
 readonly scriptFileNTag="${scriptFileName%.*}"
@@ -106,6 +106,15 @@ _SendEMailNotification_()
 #---------#
 emailSubject="TESTING Email Notifications"
 tmpEMailBodyFile="/tmp/var/tmp/tmpEMailBody_${scriptFileNTag}.$$.TXT"
+
+# Custom Optional Parameters #
+addOptionalCC=false
+if "$addOptionalCC"
+then
+   CC_NAME="CopyFooBar2"
+   # THIS MUST BE A REAL EMAIL ADDRESS ##
+   CC_ADDRESS="CopyFooBar2@google.com"
+fi
 
 {
   printf "This is a TEST to check & verify if sending email notifications"
