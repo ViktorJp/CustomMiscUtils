@@ -15,17 +15,20 @@ then _LIB_CustomEMailFunctions_SHELL_=0
 else return 0
 fi
 
+CEM_LIB_VERSION="0.9.7"
+CEM_TXT_VERFILE="cemVersion.txt"
+
+CEM_LIB_SCRIPT_TAG="master"
+CEM_LIB_SCRIPT_URL="https://raw.githubusercontent.com/Martinski4GitHub/CustomMiscUtils/${CEM_LIB_SCRIPT_TAG}/EMail"
+
+if [ -z "${cemIsVerboseMode:+xSETx}" ]
+then cemIsVerboseMode=true ; fi
+
 if [ -z "${cemDoSystemLogFile:+xSETx}" ]
 then cemDoSystemLogFile=true ; fi
 
 if [ -z "${cemSendEMailNotificationsFlag:+xSETx}" ]
 then cemSendEMailNotificationsFlag=true ; fi
-
-CEM_LIB_VERSION="0.9.6"
-CEM_TXT_VERFILE="cemVersion.txt"
-
-CEM_LIB_SCRIPT_TAG="master"
-CEM_LIB_SCRIPT_URL="https://raw.githubusercontent.com/Martinski4GitHub/CustomMiscUtils/${CEM_LIB_SCRIPT_TAG}/EMail"
 
 cemScriptDirPath="$(/usr/bin/dirname "$0")"
 cemScriptFileName="${0##*/}"
@@ -47,7 +50,7 @@ cemDateTimeFormat="%Y-%b-%d, %I:%M:%S %p %Z (%a)"
 
 cemIsInteractive=false
 [ -t 0 ] && ! tty | grep -qwi "NOT" && cemIsInteractive=true
-"$cemIsInteractive" && cemSysLogFlags="-s -t" || cemSysLogFlags="-t"
+if ! "$cemIsInteractive" ; then cemIsVerboseMode=false ; fi
 
 #------------------------------------#
 # AMTM email configuration variables #
@@ -81,7 +84,10 @@ _LogMsg_CEM_()
    if ! "$cemDoSystemLogFile" || \
       [ $# -lt 2 ] || [ -z "$1" ] || [ -z "$2" ]
    then return 1 ; fi
-   $cemSysLogger $cemSysLogFlags "$1" "$2"
+   $cemSysLogger -t "$1" "$2"
+
+   "$cemIsInteractive" && "$cemIsVerboseMode" && \
+   printf "${1}: ${2}\n"
 }
 
 #-----------------------------------------------------------#
@@ -110,7 +116,7 @@ _CheckLibraryUpdates_CEM_()
    if [ $# -gt 1 ] && [ "$2" = "quiet" ]
    then showMsg=false ; else showMsg=true ; fi
 
-   "$cemIsInteractive" && "$showMsg" && \
+   "$cemIsInteractive" && "$cemIsVerboseMode" && "$showMsg" && \
    printf "\nChecking for shared library script updates...\n"
 
    curl -kLSs --retry 3 --retry-delay 5 --retry-connrefused \
@@ -126,12 +132,12 @@ _CheckLibraryUpdates_CEM_()
    if [ "$dlCheckVerNum" -le "$libraryVerNum" ]
    then
        retCode=1
-       "$cemIsInteractive" && "$showMsg" && \
+       "$cemIsInteractive" && "$cemIsVerboseMode" && "$showMsg" && \
        printf "\nDone.\n"
    else
        _DoReInit_CEM_
        retCode=0
-       "$cemIsInteractive" && "$showMsg" && \
+       "$cemIsInteractive" && "$cemIsVerboseMode" && "$showMsg" && \
        printf "\nNew library version update [$dlCheckVerStr] available.\n"
    fi
 
@@ -266,7 +272,7 @@ _SendEMailNotification_CEM_()
 
    ! _CreateEMailContent_CEM_ "$@" && return 1
 
-   if "$cemIsInteractive"
+   if "$cemIsInteractive" && "$cemIsVerboseMode"
    then
        printf "\nSending email notification [$1]."
        printf "\nPlease wait...\n"
