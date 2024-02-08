@@ -7,8 +7,7 @@
 # email notifications using AMTM optional email config.
 #
 # Creation Date: 2020-Jun-11 [Martinski W.]
-# Last Modified: 2024-Feb-06 [Martinski W.]
-# Version: 0.9.3
+# Last Modified: 2024-Feb-07 [Martinski W.]
 ######################################################################
 
 if [ -z "${_LIB_CustomEMailFunctions_SHELL_:+xSETx}" ]
@@ -21,6 +20,12 @@ then cemDoSystemLogFile=true ; fi
 
 if [ -z "${cemSendEMailNotificationsFlag:+xSETx}" ]
 then cemSendEMailNotificationsFlag=true ; fi
+
+readonly CEM_LIB_VERSION="0.9.4"
+readonly CEM_TXT_VERFILE="cemVersion.txt"
+
+readonly CEM_LIB_SCRIPT_TAG="master"
+readonly CEM_LIB_SCRIPT_URL="https://raw.githubusercontent.com/Martinski4GitHub/CustomMiscUtils/${CEM_LIB_SCRIPT_TAG}/EMail"
 
 readonly cemScriptDirPath="$(/usr/bin/dirname "$0")"
 readonly cemScriptFileName="${0##*/}"
@@ -57,6 +62,28 @@ else
     cemSendEMailNotificationsFlag=false
 fi
 
+#-------------------------------------------------------#
+_DoReInit_CEM_()
+{
+   unset CEM_LIB_VERSION \
+         CEM_TXT_VERFILE \
+         CEM_LIB_SCRIPT_TAG \
+         CEM_LIB_SCRIPT_URL \
+         cemScriptDirPath \
+         cemScriptFileName \
+         cemScriptFNameTag \
+         cemTempEMailLogFile \
+         cemTempEMailContent \
+         cemSysLogger \
+         cemLogInfoTag \
+         cemLogErrorTag \
+         amtmEMailDirPath \
+         amtmEMailConfFile \
+         amtmEMailPswdFile \
+         cemDateTimeFormat \
+         _LIB_CustomEMailFunctions_SHELL_
+}
+
 #-----------------------------------------------------------#
 _LogMsg_CEM_()
 {
@@ -64,6 +91,46 @@ _LogMsg_CEM_()
       [ $# -lt 2 ] || [ -z "$1" ] || [ -z "$2" ]
    then return 1 ; fi
    $cemSysLogger $cemSysLogFlags "$1" "$2"
+}
+
+#-----------------------------------------------------------#
+_CheckLibraryUpdates_CEM_()
+{
+   _VersionStrToNum_()
+   {
+      if [ $# -eq 0 ] || [ -z "$1" ] ; then echo 0 ; return 1 ; fi
+      local verNum  verStr
+      
+      verStr="$(echo "$1" | sed "s/['\"]//g")"
+      verNum="$(echo "$verStr" | awk -F '.' '{printf ("%d%02d%02d\n", $1,$2,$3);}')"
+      verNum="$(echo "$verNum" | sed 's/^0*//')"
+      echo "$verNum" ; return 0
+   }
+   if [ $# -eq 0 ] || [ -z "$1" ] || [ ! -d "$1" ]
+   then
+       "$cemIsInteractive" && \
+       printf "\n**ERROR**: INVALID parameter for directory [$1]\n"
+       return 0
+   fi
+   local theVersTextFile="${1}/$CEM_TXT_VERFILE"
+
+   "$cemIsInteractive" && \
+   printf "\nChecking the shared library script version file...\n"
+
+   curl -kLSs --retry 3 --retry-delay 5 --retry-connrefused \
+   "${CEM_LIB_SCRIPT_URL}/$CEM_TXT_VERFILE" -o "$theVersTextFile"
+   chmod 666 "$theVersTextFile"
+
+   [ ! -f "$theVersTextFile" ] && return 1
+   local libraryVersNum  dlCheckVersNum
+
+   libraryVersNum="$(_VersionStrToNum_ "$CEM_LIB_VERSION")"
+   dlCheckVersNum="$(_VersionStrToNum_ "$(cat "$theVersTextFile")")"
+
+   if [ "$dlCheckVersNum" -le "$libraryVersNum" ]
+   then return 1  #NO Updates#
+   else return 0  #NEW Update#
+   fi
 }
 
 #-------------------------------------------------------#
