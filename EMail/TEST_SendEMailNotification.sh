@@ -6,34 +6,73 @@
 # A simple example.
 #
 # Creation Date: 2020-Jun-11 [Martinski W.]
-# Last Modified: 2024-Feb-03 [Martinski W.]
+# Last Modified: 2024-Feb-07 [Martinski W.]
 ####################################################################
+TEST_VERSION="0.5.2"
 
 readonly scriptFileName="${0##*/}"
 readonly scriptFileNTag="${scriptFileName%.*}"
 
-CUSTOM_EMAIL_LIB="/jffs/scripts/libs/CustomEMailFunctions.lib.sh"
-if [ -f "$CUSTOM_EMAIL_LIB" ]
+readonly CEM_LIB_TAG="master"
+readonly CEM_LIB_URL="https://raw.githubusercontent.com/Martinski4GitHub/CustomMiscUtils/${CEM_LIB_TAG}/EMail"
+
+readonly CUSTOM_EMAIL_LIBDir="/jffs/scripts/libs"
+readonly CUSTOM_EMAIL_LIBName="CustomEMailFunctions.lib.sh"
+readonly CUSTOM_EMAIL_LIBFile="${CUSTOM_EMAIL_LIBDir}/$CUSTOM_EMAIL_LIBName"
+
+#-----------------------------------------------------------#
+_DownloadCEMLibraryFile_()
+{
+   local msgStr  retCode
+   case "$1" in
+        update) msgStr="Updating" ;;
+       install) msgStr="Installing" ;;
+             *) return 1 ;;
+   esac
+   printf "\n${msgStr} the shared library script file to support email notifications...\n"
+
+   mkdir -m 755 -p "$CUSTOM_EMAIL_LIBDir"
+   curl -kLSs --retry 3 --retry-delay 5 --retry-connrefused \
+   "${CEM_LIB_URL}/$CUSTOM_EMAIL_LIBName" -o "$CUSTOM_EMAIL_LIBFile"
+   curlCode="$?"
+
+   if [ "$curlCode" -eq 0 ] && [ -f "$CUSTOM_EMAIL_LIBFile" ]
+   then
+       retCode=0
+       chmod 755 "$CUSTOM_EMAIL_LIBFile"
+       . "$CUSTOM_EMAIL_LIBFile"
+       printf "\nDone.\n"
+   else
+       retCode=1
+       printf "\n**ERROR**: Unable to download the shared library script file [$CUSTOM_EMAIL_LIBName].\n"
+   fi
+   return "$retCode"
+}
+
+if [ -f "$CUSTOM_EMAIL_LIBFile" ]
 then
-   . "$CUSTOM_EMAIL_LIB"
+   . "$CUSTOM_EMAIL_LIBFile"
+
+   if [ -z "${CEM_LIB_VERSION:+xSETx}" ] || \
+      _CheckLibraryUpdates_CEM_ "$CUSTOM_EMAIL_LIBDir"
+   then
+       _DownloadCEMLibraryFile_ "update"
+   fi
 else
-   logTag="**WARNING**_${scriptFileName}_$$"
-   logMsg="Email library script [$CUSTOM_EMAIL_LIB] *NOT* FOUND."
-   printf "\n%s: %s\n\n" "$logTag" "$logMsg"
-   /usr/bin/logger -t "$logTag" "$logMsg"
+    _DownloadCEMLibraryFile_ "install"
 fi
 
 #-----------------------------------------------------------#
 # ARG1: The email address to be used as "FROM_NAME"
 # ARG1: The email Subject string
-# ARG2: Full path of file containing the email Body msg.
+# ARG2: Full path of file containing the email Body text.
 #-----------------------------------------------------------#
 _SendEMailNotification_()
 {
    if [ -z "${amtmIsEMailConfigFileEnabled:+xSETx}" ]
    then
        logTag="**ERROR**_${scriptFileName}_$$"
-       logMsg="Email library script [$CUSTOM_EMAIL_LIB] *NOT* FOUND."
+       logMsg="Email library script [$CUSTOM_EMAIL_LIBFile] *NOT* FOUND."
        printf "\n%s: %s\n\n" "$logTag" "$logMsg"
        /usr/bin/logger -t "$logTag" "$logMsg"
        return 1
@@ -44,19 +83,22 @@ _SendEMailNotification_()
        printf "\n**ERROR**: INSUFFICIENT email parameters\n"
        return 1
    fi
+   local retCode
 
    FROM_NAME="$1"
    if _SendEMailNotification_CEM_ "$2" "-F=$3"
    then
+       retCode=0
        logTag="INFO:"
        logMsg="The email notification was sent successfully [$2]."
    else
+       retCode=1
        logTag="**ERROR**:"
        logMsg="Failure to send email notification [$2]."
    fi
    printf "\n${logTag} ${logMsg}\n"
 
-   return 0
+   return "$retCode"
 }
 
 #---------#
