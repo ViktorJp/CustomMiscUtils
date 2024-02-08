@@ -7,7 +7,7 @@
 # email notifications using AMTM optional email config.
 #
 # Creation Date: 2020-Jun-11 [Martinski W.]
-# Last Modified: 2024-Feb-07 [Martinski W.]
+# Last Modified: 2024-Feb-08 [Martinski W.]
 ######################################################################
 
 if [ -z "${_LIB_CustomEMailFunctions_SHELL_:+xSETx}" ]
@@ -21,7 +21,7 @@ then cemDoSystemLogFile=true ; fi
 if [ -z "${cemSendEMailNotificationsFlag:+xSETx}" ]
 then cemSendEMailNotificationsFlag=true ; fi
 
-CEM_LIB_VERSION="0.9.5"
+CEM_LIB_VERSION="0.9.6"
 CEM_TXT_VERFILE="cemVersion.txt"
 
 CEM_LIB_SCRIPT_TAG="master"
@@ -52,8 +52,13 @@ cemIsInteractive=false
 #------------------------------------#
 # AMTM email configuration variables #
 #------------------------------------#
-FROM_NAME=""  TO_NAME=""  FROM_ADDRESS=""  TO_ADDRESS=""
-USERNAME=""  SMTP=""  PORT=""  PROTOCOL=""  emailPwEnc=""  PASSWORD=""
+FROM_NAME=""  FROM_ADDRESS=""
+TO_NAME=""  TO_ADDRESS=""
+USERNAME=""  SMTP=""  PORT=""  PROTOCOL=""
+PASSWORD=""  emailPwEnc=""
+
+# Custom Additions ##
+CC_NAME=""  CC_ADDRESS=""
 
 if [ -f "$amtmEMailConfFile" ]
 then
@@ -202,10 +207,23 @@ _CreateEMailContent_CEM_()
        rm -f "$emailBodyFile"
    fi
 
-   ## Header ##
+   if [ -n "$CC_NAME" ] && [ -n "$CC_ADDRESS" ]
+   then
+       CC_ADDRESS_ARG="--mail-rcpt $CC_ADDRESS"
+       CC_ADDRESS_STR="\"$CC_NAME\" <$CC_ADDRESS>"
+   fi
+
+   ## Header-1 ##
    cat <<EOF > "$cemTempEMailContent"
 From: "$FROM_NAME" <$FROM_ADDRESS>
 To: "$TO_NAME" <$TO_ADDRESS>
+EOF
+
+[ -n "CC_ADDRESS_STR" ] && \
+printf "Cc: ${CC_ADDRESS_STR}\n" >> "$cemTempEMailContent"
+
+   ## Header-2 ##
+   cat <<EOF >> "$cemTempEMailContent"
 Subject: $1
 Date: $(date -R)
 MIME-Version: 1.0
@@ -241,6 +259,7 @@ _SendEMailNotification_CEM_()
    then return 1 ; fi
 
    local retCode  logTag  logMsg
+   local CC_ADDRESS_STR=""  CC_ADDRESS_ARG=""
 
    [ -z "$FROM_NAME" ] && FROM_NAME="$cemScriptFNameTag"
    [ -z "$FRIENDLY_ROUTER_NAME" ] && FRIENDLY_ROUTER_NAME="$(_GetRouterModelID_CEM_)"
@@ -256,7 +275,8 @@ _SendEMailNotification_CEM_()
    date +"$cemDateTimeFormat" > "$cemTempEMailLogFile"
 
    /usr/sbin/curl -v --url "${PROTOCOL}://${SMTP}:${PORT}" \
-   --mail-from "$FROM_ADDRESS" --mail-rcpt "$TO_ADDRESS" \
+   --mail-from "$FROM_ADDRESS" \
+   --mail-rcpt "$TO_ADDRESS" $CC_ADDRESS_ARG \
    --user "${USERNAME}:$(/usr/sbin/openssl aes-256-cbc "$emailPwEnc" -d -in "$amtmEMailPswdFile" -pass pass:ditbabot,isoi)" \
    --upload-file "$cemTempEMailContent" \
    $SSL_FLAG --ssl-reqd --crlf >> "$cemTempEMailLogFile" 2>&1
