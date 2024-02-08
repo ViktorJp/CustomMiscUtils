@@ -113,24 +113,30 @@ _CheckLibraryUpdates_CEM_()
        return 0
    fi
    local theVersTextFile="${1}/$CEM_TXT_VERFILE"
+   local libraryVersNum  dlCheckVersNum  showMsg  retCode
 
-   "$cemIsInteractive" && \
-   printf "\nChecking the shared library script version file...\n"
+   if [ $# -gt 1 ] && [ "$2" = "quiet" ]
+   then showMsg=false ; else showMsg=true ; fi
+
+   "$cemIsInteractive" && "$showMsg" && \
+   printf "\nChecking for shared library script updates...\n"
 
    curl -kLSs --retry 3 --retry-delay 5 --retry-connrefused \
    "${CEM_LIB_SCRIPT_URL}/$CEM_TXT_VERFILE" -o "$theVersTextFile"
    chmod 666 "$theVersTextFile"
 
    [ ! -f "$theVersTextFile" ] && return 1
-   local libraryVersNum  dlCheckVersNum
 
    libraryVersNum="$(_VersionStrToNum_ "$CEM_LIB_VERSION")"
    dlCheckVersNum="$(_VersionStrToNum_ "$(cat "$theVersTextFile")")"
 
    if [ "$dlCheckVersNum" -le "$libraryVersNum" ]
-   then return 1  #NO Updates#
-   else return 0  #NEW Update#
+   then retCode=1  #NO Updates#
+   else retCode=0  #NEW Update#
    fi
+   "$cemIsInteractive" && "$showMsg" && printf "\nDone.\n"
+
+   return "$retCode"
 }
 
 #-------------------------------------------------------#
