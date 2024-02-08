@@ -131,8 +131,11 @@ _CheckLibraryUpdates_CEM_()
    dlCheckVersNum="$(_VersionStrToNum_ "$(cat "$theVersTextFile")")"
 
    if [ "$dlCheckVersNum" -le "$libraryVersNum" ]
-   then retCode=1  #NO Updates#
-   else retCode=0  #NEW Update#
+   then
+       retCode=1  #NO Updates#
+   else
+       _DoReInit_CEM_
+       retCode=0  #NEW Update#
    fi
    rm -f "$theVersTextFile"
    "$cemIsInteractive" && "$showMsg" && printf "\nDone.\n"
