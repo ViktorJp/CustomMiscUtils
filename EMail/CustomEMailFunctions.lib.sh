@@ -21,29 +21,29 @@ then cemDoSystemLogFile=true ; fi
 if [ -z "${cemSendEMailNotificationsFlag:+xSETx}" ]
 then cemSendEMailNotificationsFlag=true ; fi
 
-readonly CEM_LIB_VERSION="0.9.4"
-readonly CEM_TXT_VERFILE="cemVersion.txt"
+CEM_LIB_VERSION="0.9.5"
+CEM_TXT_VERFILE="cemVersion.txt"
 
-readonly CEM_LIB_SCRIPT_TAG="master"
-readonly CEM_LIB_SCRIPT_URL="https://raw.githubusercontent.com/Martinski4GitHub/CustomMiscUtils/${CEM_LIB_SCRIPT_TAG}/EMail"
+CEM_LIB_SCRIPT_TAG="master"
+CEM_LIB_SCRIPT_URL="https://raw.githubusercontent.com/Martinski4GitHub/CustomMiscUtils/${CEM_LIB_SCRIPT_TAG}/EMail"
 
-readonly cemScriptDirPath="$(/usr/bin/dirname "$0")"
-readonly cemScriptFileName="${0##*/}"
-readonly cemScriptFNameTag="${cemScriptFileName%.*}"
+cemScriptDirPath="$(/usr/bin/dirname "$0")"
+cemScriptFileName="${0##*/}"
+cemScriptFNameTag="${cemScriptFileName%.*}"
 
-readonly cemTempEMailLogFile="/tmp/var/tmp/tmpEMail_${cemScriptFNameTag}.LOG"
-readonly cemTempEMailContent="/tmp/var/tmp/tmpEMailContent_${cemScriptFNameTag}.TXT"
+cemTempEMailLogFile="/tmp/var/tmp/tmpEMail_${cemScriptFNameTag}.LOG"
+cemTempEMailContent="/tmp/var/tmp/tmpEMailContent_${cemScriptFNameTag}.TXT"
 
-readonly cemSysLogger="$(which logger)"
-readonly cemLogInfoTag="INFO_${cemScriptFileName}_$$"
-readonly cemLogErrorTag="ERROR_${cemScriptFileName}_$$"
+cemSysLogger="$(which logger)"
+cemLogInfoTag="INFO_${cemScriptFileName}_$$"
+cemLogErrorTag="ERROR_${cemScriptFileName}_$$"
 
-readonly amtmEMailDirPath="/jffs/addons/amtm/mail"
-readonly amtmEMailConfFile="${amtmEMailDirPath}/email.conf"
-readonly amtmEMailPswdFile="${amtmEMailDirPath}/emailpw.enc"
+amtmEMailDirPath="/jffs/addons/amtm/mail"
+amtmEMailConfFile="${amtmEMailDirPath}/email.conf"
+amtmEMailPswdFile="${amtmEMailDirPath}/emailpw.enc"
 
 amtmIsEMailConfigFileEnabled=false
-readonly cemDateTimeFormat="%Y-%b-%d, %I:%M:%S %p %Z (%a)"
+cemDateTimeFormat="%Y-%b-%d, %I:%M:%S %p %Z (%a)"
 
 cemIsInteractive=false
 [ -t 0 ] && ! tty | grep -qwi "NOT" && cemIsInteractive=true
@@ -65,22 +65,8 @@ fi
 #-------------------------------------------------------#
 _DoReInit_CEM_()
 {
-   unset CEM_LIB_VERSION \
-         CEM_TXT_VERFILE \
-         CEM_LIB_SCRIPT_TAG \
-         CEM_LIB_SCRIPT_URL \
-         cemScriptDirPath \
-         cemScriptFileName \
-         cemScriptFNameTag \
-         cemTempEMailLogFile \
-         cemTempEMailContent \
-         cemSysLogger \
-         cemLogInfoTag \
-         cemLogErrorTag \
-         amtmEMailDirPath \
-         amtmEMailConfFile \
-         amtmEMailPswdFile \
-         cemDateTimeFormat \
+   unset amtmIsEMailConfigFileEnabled \
+         cemSendEMailNotificationsFlag \
          _LIB_CustomEMailFunctions_SHELL_
 }
 
