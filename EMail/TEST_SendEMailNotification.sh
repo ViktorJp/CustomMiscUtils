@@ -8,7 +8,7 @@
 # Creation Date: 2020-Jun-11 [Martinski W.]
 # Last Modified: 2024-Feb-08 [Martinski W.]
 ####################################################################
-TEST_VERSION="0.5.3"
+TEST_VERSION="0.5.4"
 
 readonly scriptFileName="${0##*/}"
 readonly scriptFileNTag="${scriptFileName%.*}"
@@ -85,7 +85,9 @@ _SendEMailNotification_()
    fi
    local retCode
 
+   cemIsVerboseMode=true  ## true OR false ##
    FROM_NAME="$1"
+
    if _SendEMailNotification_CEM_ "$2" "-F=$3"
    then
        retCode=0
