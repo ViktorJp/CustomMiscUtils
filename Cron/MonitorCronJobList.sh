@@ -5,9 +5,8 @@
 # To monitor the number of cron jobs by taking a snapshot of the
 # crontab list at a frequency given in minutes.
 #
-# Creation Date: 2020-Feb-05 [Martinski W.]
-# Last Modified: 2020-Feb-06 [Martinski W.]
-# Version: 0.2.0
+# Creation Date: 2024-Feb-05 [Martinski W.]
+# Last Modified: 2024-Feb-08 [Martinski W.]
 ####################################################################
 set -u
 
@@ -24,6 +23,7 @@ maxLogFileSizeKB=1000
 # ****** END CUSTOMIZABLE PARAMETERS SECTION ****** #
 #---------------------------------------------------#
 
+readonly scriptVERSION=0.2.1
 readonly scriptDirPath="$(/usr/bin/dirname "$0")"
 readonly scriptFileName="${0##*/}"
 readonly scriptFileNTag="${scriptFileName%.*}"
@@ -41,6 +41,9 @@ isInteractive=false
 if [ "$scriptDirPath" = "." ] || \
    { [ -t 0 ] && ! tty | grep -qwi "not" ; }
 then isInteractive=true ; fi
+
+cronListCmd="$(which crontab) -l"
+[ "$cronListCmd" = " -l" ] && cronListCmd="$(which cru) l"
 
 #-----------------------------------------------------------#
 _PrintMsg_()
@@ -233,7 +236,7 @@ _StartCJMonitor_()
       if [ "$currCronJobCount" -eq 0 ] || [ "$((countSecs % freqSecs))" -eq 0 ]
       then
          logMsg=""
-         currCronJobList="$(cru l)"
+         currCronJobList="$($cronListCmd)"
          prevCronJobCount="$currCronJobCount"
          currCronJobCount="$(echo "$currCronJobList" | wc -l)"
 
