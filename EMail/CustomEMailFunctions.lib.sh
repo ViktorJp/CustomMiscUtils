@@ -15,10 +15,10 @@ then _LIB_CustomEMailFunctions_SHELL_=0
 else return 0
 fi
 
-CEM_LIB_VERSION="0.9.8"
+CEM_LIB_VERSION="0.9.8_Dev"
 CEM_TXT_VERFILE="cemVersion.txt"
 
-CEM_LIB_SCRIPT_TAG="master"
+CEM_LIB_SCRIPT_TAG="develop"
 CEM_LIB_SCRIPT_URL="https://raw.githubusercontent.com/Martinski4GitHub/CustomMiscUtils/${CEM_LIB_SCRIPT_TAG}/EMail"
 
 if [ -z "${cemIsVerboseMode:+xSETx}" ]
