@@ -7,7 +7,7 @@
 # email notifications using AMTM optional email config.
 #
 # Creation Date: 2020-Jun-11 [Martinski W.]
-# Last Modified: 2024-Feb-08 [Martinski W.]
+# Last Modified: 2024-Feb-09 [Martinski W.]
 ######################################################################
 
 if [ -z "${_LIB_CustomEMailFunctions_SHELL_:+xSETx}" ]
@@ -15,7 +15,7 @@ then _LIB_CustomEMailFunctions_SHELL_=0
 else return 0
 fi
 
-CEM_LIB_VERSION="0.9.7"
+CEM_LIB_VERSION="0.9.8"
 CEM_TXT_VERFILE="cemVersion.txt"
 
 CEM_LIB_SCRIPT_TAG="master"
@@ -244,7 +244,7 @@ EOF
    ## Footer ##
    cat <<EOF >> "$cemTempEMailContent"
 
-Sent by the "<b>${cemScriptFileName}</b>" Tool.
+Sent by the "<b>${cemScriptFileName}</b>" script.
 From the "<b>${FRIENDLY_ROUTER_NAME}</b>" router.
 
 $(date +"$cemDateTimeFormat")
@@ -293,7 +293,6 @@ _SendEMailNotification_CEM_()
        sleep 2
        retCode=0
        rm -f "$cemTempEMailLogFile"
-       rm -f "$cemTempEMailContent"
        logTag="$cemLogInfoTag"
        logMsg="The email notification was sent successfully."
    else
@@ -301,6 +300,7 @@ _SendEMailNotification_CEM_()
        logTag="$cemLogErrorTag"
        logMsg="**ERROR**: Failure to send email notification [$curlCode]."
    fi
+   rm -f "$cemTempEMailContent"
    _LogMsg_CEM_ "$logTag" "$logMsg"
 
    return "$retCode"
