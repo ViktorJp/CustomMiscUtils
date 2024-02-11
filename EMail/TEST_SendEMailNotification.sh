@@ -6,14 +6,14 @@
 # A simple example.
 #
 # Creation Date: 2020-Jun-11 [Martinski W.]
-# Last Modified: 2024-Feb-08 [Martinski W.]
+# Last Modified: 2024-Feb-09 [Martinski W.]
 ####################################################################
-TEST_VERSION="0.5.4"
+TEST_VERSION="0.5.4_Dev"
 
 readonly scriptFileName="${0##*/}"
 readonly scriptFileNTag="${scriptFileName%.*}"
 
-readonly CEM_LIB_TAG="master"
+readonly CEM_LIB_TAG="develop"
 readonly CEM_LIB_URL="https://raw.githubusercontent.com/Martinski4GitHub/CustomMiscUtils/${CEM_LIB_TAG}/EMail"
 
 readonly CUSTOM_EMAIL_LIBDir="/jffs/scripts/libs"

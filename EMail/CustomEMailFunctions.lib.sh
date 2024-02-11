@@ -7,7 +7,7 @@
 # email notifications using AMTM optional email config.
 #
 # Creation Date: 2020-Jun-11 [Martinski W.]
-# Last Modified: 2024-Feb-09 [Martinski W.]
+# Last Modified: 2024-Feb-10 [Martinski W.]
 ######################################################################
 
 if [ -z "${_LIB_CustomEMailFunctions_SHELL_:+xSETx}" ]
@@ -15,7 +15,7 @@ then _LIB_CustomEMailFunctions_SHELL_=0
 else return 0
 fi
 
-CEM_LIB_VERSION="0.9.8"
+CEM_LIB_VERSION="0.9.9"
 CEM_TXT_VERFILE="cemVersion.txt"
 
 CEM_LIB_SCRIPT_TAG="master"
@@ -26,6 +26,9 @@ then cemIsVerboseMode=true ; fi
 
 if [ -z "${cemDoSystemLogFile:+xSETx}" ]
 then cemDoSystemLogFile=true ; fi
+
+if [ -z "${cemAddFormattingHTML:+xSETx}" ]
+then cemAddFormattingHTML=true ; fi
 
 if [ -z "${cemSendEMailNotificationsFlag:+xSETx}" ]
 then cemSendEMailNotificationsFlag=true ; fi
@@ -232,6 +235,10 @@ printf "Cc: ${CC_ADDRESS_STR}\n" >> "$cemTempEMailContent"
    cat <<EOF >> "$cemTempEMailContent"
 Subject: $1
 Date: $(date -R)
+EOF
+
+   "$cemAddFormattingHTML" && \
+   cat <<EOF >> "$cemTempEMailContent"
 MIME-Version: 1.0
 Content-Type: text/html; charset="UTF-8"
 <!DOCTYPE html><html><body><pre>
@@ -241,7 +248,18 @@ EOF
    ## Body ##
    printf "${emailBodyMsg}\n" >> "$cemTempEMailContent"
 
-   ## Footer ##
+   ## Footer-A ##
+   ! "$cemAddFormattingHTML" && \
+   cat <<EOF >> "$cemTempEMailContent"
+
+Sent by the "${cemScriptFileName}" script.
+From the "${FRIENDLY_ROUTER_NAME}" router.
+
+$(date +"$cemDateTimeFormat")
+EOF
+
+   ## Footer-B ##
+   "$cemAddFormattingHTML" && \
    cat <<EOF >> "$cemTempEMailContent"
 
 Sent by the "<b>${cemScriptFileName}</b>" script.
