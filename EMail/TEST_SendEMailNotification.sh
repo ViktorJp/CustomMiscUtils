@@ -6,9 +6,9 @@
 # A simple example.
 #
 # Creation Date: 2020-Jun-11 [Martinski W.]
-# Last Modified: 2024-Feb-09 [Martinski W.]
+# Last Modified: 2024-Feb-11 [Martinski W.]
 ####################################################################
-TEST_VERSION="0.5.4_Dev"
+TEST_VERSION="0.5.5"
 
 readonly scriptFileName="${0##*/}"
 readonly scriptFileNTag="${scriptFileName%.*}"
@@ -85,6 +85,7 @@ _SendEMailNotification_()
    fi
    local retCode
 
+   cemIsFormatHTML=true   ## true OR false ##
    cemIsVerboseMode=true  ## true OR false ##
    FROM_NAME="$1"
 
