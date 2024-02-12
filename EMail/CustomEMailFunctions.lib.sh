@@ -7,7 +7,7 @@
 # email notifications using AMTM optional email config.
 #
 # Creation Date: 2020-Jun-11 [Martinski W.]
-# Last Modified: 2024-Feb-10 [Martinski W.]
+# Last Modified: 2024-Feb-11 [Martinski W.]
 ######################################################################
 
 if [ -z "${_LIB_CustomEMailFunctions_SHELL_:+xSETx}" ]
@@ -15,7 +15,7 @@ then _LIB_CustomEMailFunctions_SHELL_=0
 else return 0
 fi
 
-CEM_LIB_VERSION="0.9.9"
+CEM_LIB_VERSION="0.9.10"
 CEM_TXT_VERFILE="cemVersion.txt"
 
 CEM_LIB_SCRIPT_TAG="master"
@@ -24,11 +24,11 @@ CEM_LIB_SCRIPT_URL="https://raw.githubusercontent.com/Martinski4GitHub/CustomMis
 if [ -z "${cemIsVerboseMode:+xSETx}" ]
 then cemIsVerboseMode=true ; fi
 
+if [ -z "${cemIsFormatHTML:+xSETx}" ]
+then cemIsFormatHTML=true ; fi
+
 if [ -z "${cemDoSystemLogFile:+xSETx}" ]
 then cemDoSystemLogFile=true ; fi
-
-if [ -z "${cemAddFormattingHTML:+xSETx}" ]
-then cemAddFormattingHTML=true ; fi
 
 if [ -z "${cemSendEMailNotificationsFlag:+xSETx}" ]
 then cemSendEMailNotificationsFlag=true ; fi
@@ -237,7 +237,7 @@ Subject: $1
 Date: $(date -R)
 EOF
 
-   "$cemAddFormattingHTML" && \
+   "$cemIsFormatHTML" && \
    cat <<EOF >> "$cemTempEMailContent"
 MIME-Version: 1.0
 Content-Type: text/html; charset="UTF-8"
@@ -249,7 +249,7 @@ EOF
    printf "${emailBodyMsg}\n" >> "$cemTempEMailContent"
 
    ## Footer-A ##
-   ! "$cemAddFormattingHTML" && \
+   ! "$cemIsFormatHTML" && \
    cat <<EOF >> "$cemTempEMailContent"
 
 Sent by the "${cemScriptFileName}" script.
@@ -259,7 +259,7 @@ $(date +"$cemDateTimeFormat")
 EOF
 
    ## Footer-B ##
-   "$cemAddFormattingHTML" && \
+   "$cemIsFormatHTML" && \
    cat <<EOF >> "$cemTempEMailContent"
 
 Sent by the "<b>${cemScriptFileName}</b>" script.
