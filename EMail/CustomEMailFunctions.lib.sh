@@ -7,7 +7,7 @@
 # email notifications using AMTM optional email config.
 #
 # Creation Date: 2020-Jun-11 [Martinski W.]
-# Last Modified: 2024-Feb-11 [Martinski W.]
+# Last Modified: 2024-Feb-12 [Martinski W.]
 ######################################################################
 
 if [ -z "${_LIB_CustomEMailFunctions_SHELL_:+xSETx}" ]
@@ -15,7 +15,7 @@ then _LIB_CustomEMailFunctions_SHELL_=0
 else return 0
 fi
 
-CEM_LIB_VERSION="0.9.10"
+CEM_LIB_VERSION="0.9.11"
 CEM_TXT_VERFILE="cemVersion.txt"
 
 CEM_LIB_SCRIPT_TAG="develop"
@@ -29,6 +29,9 @@ then cemIsFormatHTML=true ; fi
 
 if [ -z "${cemDoSystemLogFile:+xSETx}" ]
 then cemDoSystemLogFile=true ; fi
+
+if [ -z "${cemDeleteMailContentFile:+xSETx}" ]
+then cemDeleteMailContentFile=true ; fi
 
 if [ -z "${cemSendEMailNotificationsFlag:+xSETx}" ]
 then cemSendEMailNotificationsFlag=true ; fi
@@ -318,7 +321,7 @@ _SendEMailNotification_CEM_()
        logTag="$cemLogErrorTag"
        logMsg="**ERROR**: Failure to send email notification [$curlCode]."
    fi
-   rm -f "$cemTempEMailContent"
+   "$cemDeleteMailContentFile" && rm -f "$cemTempEMailContent"
    _LogMsg_CEM_ "$logTag" "$logMsg"
 
    return "$retCode"
