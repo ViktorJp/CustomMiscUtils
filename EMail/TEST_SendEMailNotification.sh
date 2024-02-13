@@ -6,9 +6,11 @@
 # A simple example.
 #
 # Creation Date: 2020-Jun-11 [Martinski W.]
-# Last Modified: 2024-Feb-12 [Martinski W.]
+# Last Modified: 2024-Feb-13 [Martinski W.]
 ####################################################################
-TEST_VERSION="0.5.6"
+set -u
+
+TEST_VERSION="0.5.7"
 
 readonly scriptFileName="${0##*/}"
 readonly scriptFileNTag="${scriptFileName%.*}"
@@ -85,7 +87,7 @@ _SendEMailNotification_()
    fi
    local retCode
 
-   cemIsFormatHTML=true   ## true OR false ##
+   cemIsFormatHTML=true            ## true OR false ##
    ## For DEBUG/TEST purposes set as follows ##
    cemIsVerboseMode=true           ## true OR false ##
    cemDeleteMailContentFile=false  ## true OR false ##
