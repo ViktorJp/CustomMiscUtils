@@ -6,9 +6,9 @@
 # A simple example.
 #
 # Creation Date: 2020-Jun-11 [Martinski W.]
-# Last Modified: 2024-Feb-11 [Martinski W.]
+# Last Modified: 2024-Feb-12 [Martinski W.]
 ####################################################################
-TEST_VERSION="0.5.5"
+TEST_VERSION="0.5.6"
 
 readonly scriptFileName="${0##*/}"
 readonly scriptFileNTag="${scriptFileName%.*}"
@@ -63,7 +63,7 @@ else
 fi
 
 #-----------------------------------------------------------#
-# ARG1: The email address to be used as "FROM_NAME"
+# ARG1: The email name/alias to be used as "FROM_NAME"
 # ARG1: The email Subject string
 # ARG2: Full path of file containing the email Body text.
 #-----------------------------------------------------------#
@@ -86,9 +86,11 @@ _SendEMailNotification_()
    local retCode
 
    cemIsFormatHTML=true   ## true OR false ##
-   cemIsVerboseMode=true  ## true OR false ##
-   FROM_NAME="$1"
+   ## For DEBUG/TEST purposes set as follows ##
+   cemIsVerboseMode=true           ## true OR false ##
+   cemDeleteMailContentFile=false  ## true OR false ##
 
+   FROM_NAME="$1"
    if _SendEMailNotification_CEM_ "$2" "-F=$3"
    then
        retCode=0
@@ -124,6 +126,6 @@ fi
   printf " is working well from the \"${0}\" shell script.\n"
 } > "$tmpEMailBodyFile"
 
-_SendEMailNotification_ "FooBar@google.com" "$emailSubject" "$tmpEMailBodyFile"
+_SendEMailNotification_ "EMailNameAlias" "$emailSubject" "$tmpEMailBodyFile"
 
 #EOF#
