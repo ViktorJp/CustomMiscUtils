@@ -7,7 +7,7 @@
 # email notifications using AMTM optional email config.
 #
 # Creation Date: 2020-Jun-11 [Martinski W.]
-# Last Modified: 2024-Feb-12 [Martinski W.]
+# Last Modified: 2024-Feb-13 [Martinski W.]
 ######################################################################
 
 if [ -z "${_LIB_CustomEMailFunctions_SHELL_:+xSETx}" ]
@@ -15,7 +15,7 @@ then _LIB_CustomEMailFunctions_SHELL_=0
 else return 0
 fi
 
-CEM_LIB_VERSION="0.9.11"
+CEM_LIB_VERSION="0.9.12"
 CEM_TXT_VERFILE="cemVersion.txt"
 
 CEM_LIB_SCRIPT_TAG="develop"
@@ -231,7 +231,7 @@ From: "$FROM_NAME" <$FROM_ADDRESS>
 To: "$TO_NAME" <$TO_ADDRESS>
 EOF
 
-[ -n "CC_ADDRESS_STR" ] && \
+[ -n "$CC_ADDRESS_STR" ] && \
 printf "Cc: ${CC_ADDRESS_STR}\n" >> "$cemTempEMailContent"
 
    ## Header-2 ##
