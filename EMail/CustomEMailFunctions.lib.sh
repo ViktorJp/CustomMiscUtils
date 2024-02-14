@@ -7,7 +7,7 @@
 # email notifications using AMTM optional email config.
 #
 # Creation Date: 2020-Jun-11 [Martinski W.]
-# Last Modified: 2024-Feb-13 [Martinski W.]
+# Last Modified: 2024-Feb-14 [Martinski W.]
 ######################################################################
 
 if [ -z "${_LIB_CustomEMailFunctions_SHELL_:+xSETx}" ]
@@ -15,7 +15,7 @@ then _LIB_CustomEMailFunctions_SHELL_=0
 else return 0
 fi
 
-CEM_LIB_VERSION="0.9.13"
+CEM_LIB_VERSION="0.9.14"
 CEM_TXT_VERFILE="cemVersion.txt"
 
 CEM_LIB_SCRIPT_TAG="develop"
@@ -249,7 +249,10 @@ Content-Type: text/html; charset="UTF-8"
 EOF
 
    ## Body ##
-   printf "\n${emailBodyMsg}\n" >> "$cemTempEMailContent"
+   if "$cemIsFormatHTML"
+   then printf "%s\n" "$emailBodyMsg" >> "$cemTempEMailContent"
+   else printf "\n%s\n" "$emailBodyMsg" >> "$cemTempEMailContent"
+   fi
 
    ## Footer-A ##
    ! "$cemIsFormatHTML" && \
@@ -302,8 +305,7 @@ _SendEMailNotification_CEM_()
    date +"$cemDateTimeFormat" > "$cemTempEMailLogFile"
 
    /usr/sbin/curl -v --url "${PROTOCOL}://${SMTP}:${PORT}" \
-   --mail-from "$FROM_ADDRESS" \
-   --mail-rcpt "$TO_ADDRESS" $CC_ADDRESS_ARG \
+   --mail-from "$FROM_ADDRESS" --mail-rcpt "$TO_ADDRESS" $CC_ADDRESS_ARG \
    --user "${USERNAME}:$(/usr/sbin/openssl aes-256-cbc "$emailPwEnc" -d -in "$amtmEMailPswdFile" -pass pass:ditbabot,isoi)" \
    --upload-file "$cemTempEMailContent" \
    $SSL_FLAG --ssl-reqd --crlf >> "$cemTempEMailLogFile" 2>&1
