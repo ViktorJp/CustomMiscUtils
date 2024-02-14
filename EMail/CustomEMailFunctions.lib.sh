@@ -15,7 +15,7 @@ then _LIB_CustomEMailFunctions_SHELL_=0
 else return 0
 fi
 
-CEM_LIB_VERSION="0.9.12"
+CEM_LIB_VERSION="0.9.13"
 CEM_TXT_VERFILE="cemVersion.txt"
 
 CEM_LIB_SCRIPT_TAG="develop"
@@ -249,7 +249,7 @@ Content-Type: text/html; charset="UTF-8"
 EOF
 
    ## Body ##
-   printf "${emailBodyMsg}\n" >> "$cemTempEMailContent"
+   printf "\n${emailBodyMsg}\n" >> "$cemTempEMailContent"
 
    ## Footer-A ##
    ! "$cemIsFormatHTML" && \
