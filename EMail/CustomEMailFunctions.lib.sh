@@ -7,7 +7,7 @@
 # email notifications using AMTM optional email config.
 #
 # Creation Date: 2020-Jun-11 [Martinski W.]
-# Last Modified: 2024-Feb-14 [Martinski W.]
+# Last Modified: 2024-Feb-15 [Martinski W.]
 ######################################################################
 
 if [ -z "${_LIB_CustomEMailFunctions_SHELL_:+xSETx}" ]
@@ -15,7 +15,7 @@ then _LIB_CustomEMailFunctions_SHELL_=0
 else return 0
 fi
 
-CEM_LIB_VERSION="0.9.14"
+CEM_LIB_VERSION="0.9.15"
 CEM_TXT_VERFILE="cemVersion.txt"
 
 CEM_LIB_SCRIPT_TAG="develop"
@@ -201,85 +201,102 @@ CheckEMailConfigFileFromAMTM_CEM_()
 #-------------------------------------------------------#
 # ARG1: Email Subject String
 # ARG2: Email Body File or String
+# ARG3: Email Body Title String [OPTIONAL]
 #-------------------------------------------------------#
 _CreateEMailContent_CEM_()
 {
-   if [ $# -lt 2 ] || [ -z "$1" ] || [ -z "$2" ]
-   then return 1 ; fi
-   local emailBodyMsg  emailBodyFile
+    if [ $# -lt 2 ] || [ -z "$1" ] || [ -z "$2" ]
+    then return 1 ; fi
+    local emailBodyMsge  emailBodyFile  emailBodyTitle=""
 
-   rm -f "$cemTempEMailContent"
+    rm -f "$cemTempEMailContent"
 
-   if ! echo "$2" | grep -q '^-F='
-   then
-       emailBodyMsg="$2"
-   else
-       emailBodyFile="${2##*=}"
-       emailBodyMsg="$(cat "$emailBodyFile")"
-       rm -f "$emailBodyFile"
-   fi
+    if ! echo "$2" | grep -q '^-F='
+    then
+        emailBodyMsge="$2"
+    else
+        emailBodyFile="${2##*=}"
+        emailBodyMsge="$(cat "$emailBodyFile")"
+        rm -f "$emailBodyFile"
+    fi
 
-   if [ -n "$CC_NAME" ] && [ -n "$CC_ADDRESS" ]
-   then
-       CC_ADDRESS_ARG="--mail-rcpt $CC_ADDRESS"
-       CC_ADDRESS_STR="\"$CC_NAME\" <$CC_ADDRESS>"
-   fi
+    if [ $# -gt 2 ] && [ -n "$3" ]
+    then emailBodyTitle="$3" ; fi
 
-   ## Header-1 ##
-   cat <<EOF > "$cemTempEMailContent"
+    if [ -n "$CC_NAME" ] && [ -n "$CC_ADDRESS" ]
+    then
+        CC_ADDRESS_ARG="--mail-rcpt $CC_ADDRESS"
+        CC_ADDRESS_STR="\"${CC_NAME}\" <$CC_ADDRESS>"
+    fi
+
+    ## Header-1 ##
+    cat <<EOF > "$cemTempEMailContent"
 From: "$FROM_NAME" <$FROM_ADDRESS>
 To: "$TO_NAME" <$TO_ADDRESS>
 EOF
 
-[ -n "$CC_ADDRESS_STR" ] && \
-printf "Cc: ${CC_ADDRESS_STR}\n" >> "$cemTempEMailContent"
+    [ -n "$CC_ADDRESS_STR" ] && \
+    printf "Cc: %s\n" "$CC_ADDRESS_STR" >> "$cemTempEMailContent"
 
-   ## Header-2 ##
-   cat <<EOF >> "$cemTempEMailContent"
+    ## Header-2 ##
+    cat <<EOF >> "$cemTempEMailContent"
 Subject: $1
 Date: $(date -R)
 EOF
 
-   "$cemIsFormatHTML" && \
-   cat <<EOF >> "$cemTempEMailContent"
+    if "$cemIsFormatHTML"
+    then
+        [ -z "$emailBodyTitle" ] && emailBodyTitle="$1"
+
+        cat <<EOF >> "$cemTempEMailContent"
 MIME-Version: 1.0
 Content-Type: text/html; charset="UTF-8"
-<!DOCTYPE html><html><body><pre>
-<p style="color:black; font-family:sans-serif; font-size:100%;">
+Content-Disposition: inline
+<!DOCTYPE html><html><body><h4>${emailBodyTitle}</h4>
+<div style="color:black; font-family: sans-serif; font-size:110%;"><pre>
 EOF
+    else
+        cat <<EOF >> "$cemTempEMailContent"
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
 
-   ## Body ##
-   if "$cemIsFormatHTML"
-   then printf "%s\n" "$emailBodyMsg" >> "$cemTempEMailContent"
-   else printf "\n%s\n" "$emailBodyMsg" >> "$cemTempEMailContent"
-   fi
+EOF
+        [ -n "$emailBodyTitle" ] && \
+        printf "%s\n\n" "$emailBodyTitle" >> "$cemTempEMailContent"
+    fi
 
-   ## Footer-A ##
-   ! "$cemIsFormatHTML" && \
-   cat <<EOF >> "$cemTempEMailContent"
+    ## Body ##
+    printf "%s\n" "$emailBodyMsge" >> "$cemTempEMailContent"
+
+    ## Footer ##
+    if "$cemIsFormatHTML"
+    then
+        cat <<EOF >> "$cemTempEMailContent"
+
+Sent by the "<b>${cemScriptFileName}</b>" script.
+From the "<b>${FRIENDLY_ROUTER_NAME}</b>" router.
+
+$(date +"$cemDateTimeFormat")
+</pre></div></body></html>
+EOF
+    else
+        cat <<EOF >> "$cemTempEMailContent"
 
 Sent by the "${cemScriptFileName}" script.
 From the "${FRIENDLY_ROUTER_NAME}" router.
 
 $(date +"$cemDateTimeFormat")
 EOF
+    fi
 
-   ## Footer-B ##
-   "$cemIsFormatHTML" && \
-   cat <<EOF >> "$cemTempEMailContent"
-
-Sent by the "<b>${cemScriptFileName}</b>" script.
-From the "<b>${FRIENDLY_ROUTER_NAME}</b>" router.
-
-$(date +"$cemDateTimeFormat")
-</p></pre></body></html>
-EOF
     return 0
 }
 
 #-------------------------------------------------------#
 # ARG1: Email Subject String
 # ARG2: Email Body File or String
+# ARG3: Email Body Title String [OPTIONAL]
 #-------------------------------------------------------#
 _SendEMailNotification_CEM_()
 {
