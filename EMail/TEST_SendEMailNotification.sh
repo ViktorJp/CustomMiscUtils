@@ -6,11 +6,11 @@
 # A simple example.
 #
 # Creation Date: 2020-Jun-11 [Martinski W.]
-# Last Modified: 2024-Feb-13 [Martinski W.]
+# Last Modified: 2024-Feb-15 [Martinski W.]
 ####################################################################
 set -u
 
-TEST_VERSION="0.5.7"
+TEST_VERSION="0.5.8"
 
 readonly scriptFileName="${0##*/}"
 readonly scriptFileNTag="${scriptFileName%.*}"
@@ -66,8 +66,9 @@ fi
 
 #-----------------------------------------------------------#
 # ARG1: The email name/alias to be used as "FROM_NAME"
-# ARG1: The email Subject string
-# ARG2: Full path of file containing the email Body text.
+# ARG2: The email Subject string.
+# ARG3: Full path of file containing the email Body text.
+# ARG4: The email Body Title string [OPTIONAL].
 #-----------------------------------------------------------#
 _SendEMailNotification_()
 {
@@ -85,7 +86,9 @@ _SendEMailNotification_()
        printf "\n**ERROR**: INSUFFICIENT email parameters\n"
        return 1
    fi
-   local retCode
+   local retCode  emailBodyTitle=""
+
+   [ $# -gt 3 ] && [ -n "$4" ] && emailBodyTitle="$4"
 
    cemIsFormatHTML=true            ## true OR false ##
    ## For DEBUG/TEST purposes set as follows ##
@@ -93,7 +96,7 @@ _SendEMailNotification_()
    cemDeleteMailContentFile=false  ## true OR false ##
 
    FROM_NAME="$1"
-   if _SendEMailNotification_CEM_ "$2" "-F=$3"
+   if _SendEMailNotification_CEM_ "$2" "-F=$3" "$emailBodyTitle"
    then
        retCode=0
        logTag="INFO:"
@@ -111,16 +114,24 @@ _SendEMailNotification_()
 #---------#
 # Example #
 #---------#
-emailSubject="TESTING Email Notifications"
+emailSubject="TESTING Email Setup"
 tmpEMailBodyFile="/tmp/var/tmp/tmpEMailBody_${scriptFileNTag}.$$.TXT"
+emailBodyTitle=""   ##THIS IS OPTIONAL##
 
-# Custom Optional Parameters #
+# Custom OPTIONAL Parameter #
+addBodyTitle=true
+if "$addBodyTitle"
+then
+    emailBodyTitle="TESTING Email Notifications Setup"
+fi
+
+# Custom OPTIONAL Parameter #
 addOptionalCC=false
 if "$addOptionalCC"
 then
-   CC_NAME="CopyFooBar2"
-   # THIS MUST BE A REAL EMAIL ADDRESS ##
-   CC_ADDRESS="CopyFooBar2@google.com"
+    CC_NAME="CopyFooBar2"
+    # THIS MUST BE A REAL EMAIL ADDRESS ##
+    CC_ADDRESS="CopyFooBar2@google.com"
 fi
 
 {
@@ -128,6 +139,6 @@ fi
   printf " is working well from the \"${0}\" shell script.\n"
 } > "$tmpEMailBodyFile"
 
-_SendEMailNotification_ "EMailNameAlias" "$emailSubject" "$tmpEMailBodyFile"
+_SendEMailNotification_ "EMailNameAlias" "$emailSubject" "$tmpEMailBodyFile" "$emailBodyTitle"
 
 #EOF#
