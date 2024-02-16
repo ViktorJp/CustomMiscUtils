@@ -15,7 +15,7 @@ TEST_VERSION="0.5.8"
 readonly scriptFileName="${0##*/}"
 readonly scriptFileNTag="${scriptFileName%.*}"
 
-readonly CEM_LIB_TAG="develop"
+readonly CEM_LIB_TAG="master"
 readonly CEM_LIB_URL="https://raw.githubusercontent.com/Martinski4GitHub/CustomMiscUtils/${CEM_LIB_TAG}/EMail"
 
 readonly CUSTOM_EMAIL_LIBDir="/jffs/scripts/libs"
