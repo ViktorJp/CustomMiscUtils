@@ -7,7 +7,7 @@
 # email notifications using AMTM optional email config.
 #
 # Creation Date: 2020-Jun-11 [Martinski W.]
-# Last Modified: 2024-Feb-15 [Martinski W.]
+# Last Modified: 2024-Feb-16 [Martinski W.]
 ######################################################################
 
 if [ -z "${_LIB_CustomEMailFunctions_SHELL_:+xSETx}" ]
@@ -18,7 +18,7 @@ fi
 CEM_LIB_VERSION="0.9.15"
 CEM_TXT_VERFILE="cemVersion.txt"
 
-CEM_LIB_SCRIPT_TAG="develop"
+CEM_LIB_SCRIPT_TAG="master"
 CEM_LIB_SCRIPT_URL="https://raw.githubusercontent.com/Martinski4GitHub/CustomMiscUtils/${CEM_LIB_SCRIPT_TAG}/EMail"
 
 if [ -z "${cemIsVerboseMode:+xSETx}" ]
@@ -253,7 +253,7 @@ MIME-Version: 1.0
 Content-Type: text/html; charset="UTF-8"
 Content-Disposition: inline
 <!DOCTYPE html><html><body><h4>${emailBodyTitle}</h4>
-<div style="color:black; font-family: sans-serif; font-size:110%;"><pre>
+<div style="color:black; font-family: sans-serif; font-size:115%;"><pre>
 EOF
     else
         cat <<EOF >> "$cemTempEMailContent"
