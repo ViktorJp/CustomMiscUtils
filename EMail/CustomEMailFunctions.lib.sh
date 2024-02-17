@@ -27,6 +27,9 @@ then cemIsVerboseMode=true ; fi
 if [ -z "${cemIsFormatHTML:+xSETx}" ]
 then cemIsFormatHTML=true ; fi
 
+if [ -z "${cemIsDebugMode:+xSETx}" ]
+then cemIsDebugMode=false ; fi
+
 if [ -z "${cemDoSystemLogFile:+xSETx}" ]
 then cemDoSystemLogFile=true ; fi
 
@@ -252,7 +255,10 @@ EOF
 MIME-Version: 1.0
 Content-Type: text/html; charset="UTF-8"
 Content-Disposition: inline
-<!DOCTYPE html><html><body><h4>${emailBodyTitle}</h4>
+
+<!DOCTYPE html><html>
+<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></head>
+<body><h4>${emailBodyTitle}</h4>
 <div style="color:black; font-family: sans-serif; font-size:115%;"><pre>
 EOF
     else
@@ -305,7 +311,7 @@ _SendEMailNotification_CEM_()
       ! CheckEMailConfigFileFromAMTM_CEM_
    then return 1 ; fi
 
-   local retCode  logTag  logMsg
+   local logTag  logMsg
    local CC_ADDRESS_STR=""  CC_ADDRESS_ARG=""
 
    [ -z "$FROM_NAME" ] && FROM_NAME="$cemScriptFNameTag"
@@ -331,19 +337,23 @@ _SendEMailNotification_CEM_()
    if [ "$curlCode" -eq 0 ]
    then
        sleep 2
-       retCode=0
        rm -f "$cemTempEMailLogFile"
        logTag="$cemLogInfoTag"
        logMsg="The email notification was sent successfully."
    else
-       retCode=1
        logTag="$cemLogErrorTag"
-       logMsg="**ERROR**: Failure to send email notification [$curlCode]."
+       logMsg="**ERROR**: Failure to send email notification [Code: $curlCode]."
+       if "$cemIsInteractive" && "$cemIsVerboseMode" && "$cemIsDebugMode"
+       then
+           echo "======================================================="
+           cat "$cemTempEMailLogFile"
+           echo "======================================================="
+       fi
    fi
    "$cemDeleteMailContentFile" && rm -f "$cemTempEMailContent"
    _LogMsg_CEM_ "$logTag" "$logMsg"
 
-   return "$retCode"
+   return "$curlCode"
 }
 
 _LIB_CustomEMailFunctions_SHELL_=1
