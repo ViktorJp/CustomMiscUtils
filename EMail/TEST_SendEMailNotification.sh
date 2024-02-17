@@ -2,11 +2,16 @@
 ####################################################################
 # TEST_SendEMailNotification.sh
 # 
-# To test using the "CustomEMailFunctions.lib.sh" shell library.
+# To test using the "CustomEMailFunctions.lib.sh" shared library.
 # A simple example.
 #
+# NOTE:
+# Variables with the "cem" prefix are reserved and used by the 
+# shared library. You can modify the value but do *NOT* change
+# the variable names.
+#
 # Creation Date: 2020-Jun-11 [Martinski W.]
-# Last Modified: 2024-Feb-15 [Martinski W.]
+# Last Modified: 2024-Feb-16 [Martinski W.] 
 ####################################################################
 set -u
 
@@ -86,34 +91,43 @@ _SendEMailNotification_()
        printf "\n**ERROR**: INSUFFICIENT email parameters\n"
        return 1
    fi
+
+   if [ ! -f "$3" ]
+   then
+       printf "\n**ERROR**: Email body contents file [$3] NOT FOUND.\n"
+       return 1
+   fi
+
    local retCode  emailBodyTitle=""
 
    [ $# -gt 3 ] && [ -n "$4" ] && emailBodyTitle="$4"
 
-   cemIsFormatHTML=true            ## true OR false ##
-   ## For DEBUG/TEST purposes set as follows ##
+   ## ONLY for DEBUG/TEST purposes set these as needed ##
+   cemIsDebugMode=false            ## true OR false ##
    cemIsVerboseMode=true           ## true OR false ##
    cemDeleteMailContentFile=false  ## true OR false ##
 
    FROM_NAME="$1"
-   if _SendEMailNotification_CEM_ "$2" "-F=$3" "$emailBodyTitle"
+   _SendEMailNotification_CEM_ "$2" "-F=$3" "$emailBodyTitle"
+   retCode="$?"
+
+   if [ "$retCode" -eq 0 ]
    then
-       retCode=0
        logTag="INFO:"
        logMsg="The email notification was sent successfully [$2]."
    else
-       retCode=1
        logTag="**ERROR**:"
-       logMsg="Failure to send email notification [$2]."
+       logMsg="Failure to send email notification [Error Code: $retCode][$2]."
    fi
    printf "\n${logTag} ${logMsg}\n"
 
    return "$retCode"
 }
 
-#---------#
-# Example #
-#---------#
+#---------------#
+# Example Setup #
+#---------------#
+cemIsFormatHTML=true  ## true OR false ##
 emailSubject="TESTING Email Setup"
 tmpEMailBodyFile="/tmp/var/tmp/tmpEMailBody_${scriptFileNTag}.$$.TXT"
 emailBodyTitle=""   ##THIS IS OPTIONAL##
@@ -139,6 +153,6 @@ fi
   printf " is working well from the \"${0}\" shell script.\n"
 } > "$tmpEMailBodyFile"
 
-_SendEMailNotification_ "EMailNameAlias" "$emailSubject" "$tmpEMailBodyFile" "$emailBodyTitle"
+_SendEMailNotification_ "Email_TEST" "$emailSubject" "$tmpEMailBodyFile" "$emailBodyTitle"
 
 #EOF#
