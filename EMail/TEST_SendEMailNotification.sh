@@ -11,7 +11,7 @@
 # the variable names.
 #
 # Creation Date: 2020-Jun-11 [Martinski W.]
-# Last Modified: 2024-Feb-16 [Martinski W.] 
+# Last Modified: 2024-Feb-16 [Martinski W.]
 ####################################################################
 set -u
 
