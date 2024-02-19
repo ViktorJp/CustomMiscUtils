@@ -7,7 +7,7 @@
 # email notifications using AMTM optional email config.
 #
 # Creation Date: 2020-Jun-11 [Martinski W.]
-# Last Modified: 2024-Feb-16 [Martinski W.]
+# Last Modified: 2024-Feb-18 [Martinski W.]
 ######################################################################
 
 if [ -z "${_LIB_CustomEMailFunctions_SHELL_:+xSETx}" ]
@@ -55,7 +55,7 @@ amtmEMailConfFile="${amtmEMailDirPath}/email.conf"
 amtmEMailPswdFile="${amtmEMailDirPath}/emailpw.enc"
 
 amtmIsEMailConfigFileEnabled=false
-cemDateTimeFormat="%Y-%b-%d, %I:%M:%S %p %Z (%a)"
+cemDateTimeFormat="%Y-%b-%d %a %I:%M:%S %p %Z"
 
 cemIsInteractive=false
 [ -t 0 ] && ! tty | grep -qwi "NOT" && cemIsInteractive=true
@@ -222,6 +222,8 @@ _CreateEMailContent_CEM_()
         emailBodyMsge="$(cat "$emailBodyFile")"
         rm -f "$emailBodyFile"
     fi
+    ! "$cemIsFormatHTML" && \
+    emailBodyMsge="$(echo "$emailBodyMsge" | sed 's/[<]b[>]//g ; s/[<]\/b[>]//g')"
 
     if [ $# -gt 2 ] && [ -n "$3" ]
     then emailBodyTitle="$3" ; fi
@@ -249,8 +251,6 @@ EOF
 
     if "$cemIsFormatHTML"
     then
-        [ -z "$emailBodyTitle" ] && emailBodyTitle="$1"
-
         cat <<EOF >> "$cemTempEMailContent"
 MIME-Version: 1.0
 Content-Type: text/html; charset="UTF-8"
@@ -258,8 +258,8 @@ Content-Disposition: inline
 
 <!DOCTYPE html><html>
 <head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></head>
-<body><h4>${emailBodyTitle}</h4>
-<div style="color:black; font-family: sans-serif; font-size:115%;"><pre>
+<body><h2>${emailBodyTitle}</h2>
+<div style="color:black; font-family: sans-serif; font-size:130%;"><pre>
 EOF
     else
         cat <<EOF >> "$cemTempEMailContent"
