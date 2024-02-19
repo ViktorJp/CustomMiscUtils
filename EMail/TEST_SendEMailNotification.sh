@@ -98,9 +98,9 @@ _SendEMailNotification_()
        return 1
    fi
 
-   local retCode  emailBodyTitle=""
+   local retCode  emailBodyTitleStr=""
 
-   [ $# -gt 3 ] && [ -n "$4" ] && emailBodyTitle="$4"
+   [ $# -gt 3 ] && [ -n "$4" ] && emailBodyTitleStr="$4"
 
    ## ONLY for DEBUG/TEST purposes set these as needed ##
    cemIsDebugMode=false            ## true OR false ##
@@ -108,7 +108,7 @@ _SendEMailNotification_()
    cemDeleteMailContentFile=false  ## true OR false ##
 
    FROM_NAME="$1"
-   _SendEMailNotification_CEM_ "$2" "-F=$3" "$emailBodyTitle"
+   _SendEMailNotification_CEM_ "$2" "-F=$3" "$emailBodyTitleStr"
    retCode="$?"
 
    if [ "$retCode" -eq 0 ]
