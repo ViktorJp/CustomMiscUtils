@@ -11,7 +11,7 @@
 # the variable names.
 #
 # Creation Date: 2020-Jun-11 [Martinski W.]
-# Last Modified: 2024-Feb-16 [Martinski W.]
+# Last Modified: 2024-Feb-18 [Martinski W.]
 ####################################################################
 set -u
 
@@ -127,19 +127,33 @@ _SendEMailNotification_()
 #---------------#
 # Example Setup #
 #---------------#
-cemIsFormatHTML=true  ## true OR false ##
 emailSubject="TESTING Email Setup"
 tmpEMailBodyFile="/tmp/var/tmp/tmpEMailBody_${scriptFileNTag}.$$.TXT"
-emailBodyTitle=""   ##THIS IS OPTIONAL##
 
-# Custom OPTIONAL Parameter #
+#------------------------------------------
+# Customizable Format Type Parameter.
+# To set the desired email format type.
+# For "HTML" format set to true.
+# For "Plain Text" format set to false.
+#------------------------------------------
+cemIsFormatHTML=true
+
+#----------------------------------------------------
+# Customizable OPTIONAL Parameter.
+# To set as a title at the top of the email body.
+#----------------------------------------------------
+emailBodyTitle=""
 addBodyTitle=true
 if "$addBodyTitle"
 then
-    emailBodyTitle="TESTING Email Notifications Setup"
+    emailBodyTitle="Testing Email Notification"
 fi
 
-# Custom OPTIONAL Parameter #
+#-----------------------------------------------------
+# Customizable OPTIONAL Parameter.
+# To use a secondary email address as "CC" parameter
+# for email notifications.
+#-----------------------------------------------------
 addOptionalCC=false
 if "$addOptionalCC"
 then
@@ -149,10 +163,10 @@ then
 fi
 
 {
-  printf "This is a TEST to check & verify if sending email notifications"
+  printf "This is a <b>TEST</b> to check & verify if sending email notifications"
   printf " is working well from the \"${0}\" shell script.\n"
 } > "$tmpEMailBodyFile"
 
-_SendEMailNotification_ "Email_TEST" "$emailSubject" "$tmpEMailBodyFile" "$emailBodyTitle"
+_SendEMailNotification_ "EmailTEST" "$emailSubject" "$tmpEMailBodyFile" "$emailBodyTitle"
 
 #EOF#
