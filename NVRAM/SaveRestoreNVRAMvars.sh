@@ -10,7 +10,7 @@
 # section.
 #
 # Creation Date: 2021-Jan-24 [Martinski W.]
-# Last Modified: 2024-Mar-07 [Martinski W.]
+# Last Modified: 2024-Mar-09 [Martinski W.]
 # Version: 0.7.11
 ######################################################################
 set -u
@@ -145,7 +145,7 @@ trap 'exit 10' EXIT HUP INT QUIT ABRT TERM
 _WaitForEnterKey_()
 {
    ! "$isInteractive" && return 0
-   printf "\nPress enter key to continue..."
+   printf "\nPress <Enter> key to continue..."
    read -r EnterKEY ; echo
 }
 
@@ -1199,7 +1199,7 @@ _ListContentsOfBackupFile()
    if [ "$theFilePath" = "NONE" ] || [ ! -f "$theFilePath" ]
    then return 1 ; fi
 
-   printf "Listing contents of backup file:\n[${GRNct}${theFilePath}${NOct}]\n\n"
+   printf "\nListing contents of backup file:\n[${GRNct}${theFilePath}${NOct}]\n\n"
    if tar -tzf "$theFilePath" -C "$theTEMPdir" | sort -d
    then
        retCode=0
@@ -1244,7 +1244,7 @@ _DeleteSavedBackupFile_()
        fileToDelete="$theFileList"
    fi
 
-   printf "${delMsg}\n${GRNct}${theFileList}${NOct}\n"
+   printf "\n${delMsg}\n${GRNct}${theFileList}${NOct}\n"
    if ! _WaitForResponse_ "Please confirm deletion"
    then
        printf "File(s) ${REDct}NOT${NOct} deleted.\n"
