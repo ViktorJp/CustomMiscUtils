@@ -29,8 +29,8 @@
 # cru a LogMemStats "*/30 * * * * /jffs/scripts/LogMemoryStats.sh"
 #--------------------------------------------------------------------
 # Creation Date: 2021-Apr-03 [Martinski W.]
-# Last Modified: 2023-Sep-27 [Martinski W.]
-# Version: 0.5.2
+# Last Modified: 2024-Mar-11 [Martinski W.]
+# Version: 0.5.3
 #####################################################################
 set -u
 
@@ -162,19 +162,15 @@ _InfoHRdu_()
   echo "$tmpStr" | grep -E "^([0-9]+[.][0-9]+K[[:blank:]]+)" | awk -v minKB="$duMinKB" -F '.' '{if ($1 > minKB) print $0}' | head -n "$2"
 }
 
-_FindProcsTopNum_()
-{ top -b -n1 | grep -E "^(Mem:|CPU:|Load average:|[[:blank:]]+PID[[:blank:]]+|[[:blank:]]*[0-9]+[[:blank:]]+)" | head -n "$(($1 + 4))" ; }
-
 _ValidateLogDirPath_ "$scriptLogDPath" "$tempAltLogDPath"
 _CheckLogFileSize_
 
 {
    echo "=================================="
    date +"%Y-%b-%d, %I:%M:%S %p %Z (%a)"
-   printf "free\n----\n" ; free
-   echo
-   _ProcMemInfo_
-   echo
+   printf "Uptime\n------\n" ; uptime ; echo
+   printf "free:\n" ; free ; echo
+   _ProcMemInfo_ ; echo
    df -hT | grep -E "(^Filesystem|/jffs$|/tmp$|/var$)" | sort -d -t ' ' -k 1
    echo
    case "$units" in
@@ -198,7 +194,7 @@ _CheckLogFileSize_
              ;;
    esac
    echo
-   _FindProcsTopNum_ 10
+   top -b -n1 | head -n 14
 } > "$tempLogFPath"
 
 "$isInteractive" && cat "$tempLogFPath"
