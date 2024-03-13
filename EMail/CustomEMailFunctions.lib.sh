@@ -135,7 +135,7 @@ _CheckLibraryUpdates_CEM_()
    then
        retCode=1
        "$cemIsInteractive" && "$cemIsVerboseMode" && "$showMsg" && \
-       printf "\nDone.\n"
+       printf "Done.\n"
    else
        _DoReInit_CEM_
        retCode=0
