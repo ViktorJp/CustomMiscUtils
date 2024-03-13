@@ -236,7 +236,7 @@ _CreateEMailContent_CEM_()
     fi
 
     ## Header-1 ##
-    cat <<EOF > "$cemTempEMailContent"
+    cat <<EOF >> "$cemTempEMailContent"
 From: "$FROM_NAME" <$FROM_ADDRESS>
 To: "$TO_NAME" <$TO_ADDRESS>
 EOF
