@@ -29,8 +29,8 @@
 # cru a LogMemStats "*/30 * * * * /jffs/scripts/LogMemoryStats.sh"
 #--------------------------------------------------------------------
 # Creation Date: 2021-Apr-03 [Martinski W.]
-# Last Modified: 2024-Mar-11 [Martinski W.]
-# Version: 0.5.3
+# Last Modified: 2024-Mar-12 [Martinski W.]
+# Version: 0.5.4
 #####################################################################
 set -u
 
@@ -63,6 +63,8 @@ readonly tempLogFPath="/tmp/var/tmp/${scriptFileNTag}.TMP.LOG"
 readonly maxLogFileSize="$((maxLogFileSizeKB * 1024))"
 readonly duFilterSizeKB=750   #Filter for "du" output#
 readonly tempAltLogDPath="/jffs/scripts/logs"
+readonly CPU_TempProcDMU=/proc/dmu/temperature
+readonly CPU_TempThermal=/sys/devices/virtual/thermal/thermal_zone0/temp
 
 scriptLogFPath="${scriptLogDPath}/$scriptLogFName"
 backupLogFPath="${scriptLogDPath}/$backupLogFName"
@@ -162,6 +164,40 @@ _InfoHRdu_()
   echo "$tmpStr" | grep -E "^([0-9]+[.][0-9]+K[[:blank:]]+)" | awk -v minKB="$duMinKB" -F '.' '{if ($1 > minKB) print $0}' | head -n "$2"
 }
 
+_Get_CPU_Temp_DMU_()
+{
+   local rawTemp  charPos3  cpuTemp
+   rawTemp="$(awk -F ' ' '{print $4}' "$CPU_TempProcDMU")"
+
+   ## To check for a possible 3-digit value ##
+   charPos3="${rawTemp:2:1}"
+   if echo "$charPos3" | grep -qE "[0-9]"
+   then cpuTemp="${rawTemp:0:3}.0"
+   else cpuTemp="${rawTemp:0:2}.0"
+   fi
+   printf "CPU Temperature: ${cpuTemp} °C\n"
+}
+
+_Get_CPU_Temp_Thermal_()
+{
+   local rawTemp  cpuTemp
+   rawTemp="$(cat "$CPU_TempThermal")"
+   cpuTemp="$((rawTemp / 1000)).$(printf "%03d" "$((rawTemp % 1000))")"
+   printf "CPU Temperature: ${cpuTemp} °C\n"
+}
+
+_CPU_Temperature_()
+{
+   if [ -f "$CPU_TempProcDMU" ]
+   then _Get_CPU_Temp_DMU_ ; return 0
+   fi
+   if [ -f "$CPU_TempThermal" ]
+   then _Get_CPU_Temp_Thermal_ ; return 0
+   fi
+   printf "\n**ERROR**: CPU Temperature file was *NOT* found.\n"
+   return 1
+}
+
 _ValidateLogDirPath_ "$scriptLogDPath" "$tempAltLogDPath"
 _CheckLogFileSize_
 
@@ -169,6 +205,7 @@ _CheckLogFileSize_
    echo "=================================="
    date +"%Y-%b-%d, %I:%M:%S %p %Z (%a)"
    printf "Uptime\n------\n" ; uptime ; echo
+   _CPU_Temperature_ ; echo
    printf "free:\n" ; free ; echo
    _ProcMemInfo_ ; echo
    df -hT | grep -E "(^Filesystem|/jffs$|/tmp$|/var$)" | sort -d -t ' ' -k 1
