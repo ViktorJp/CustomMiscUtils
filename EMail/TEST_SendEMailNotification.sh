@@ -1,72 +1,100 @@
 #!/bin/sh
 ####################################################################
 # TEST_SendEMailNotification.sh
-# 
+#
 # To test using the "CustomEMailFunctions.lib.sh" shared library.
 # A simple example.
 #
-# NOTE:
-# Variables with the "cem" prefix are reserved and used by the 
-# shared library. You can modify the value but do *NOT* change
-# the variable names.
+# IMPORTANT NOTE:
+# Variables with the "cem" or "CEM" prefix are reserved for
+# the shared custom email library. You can modify the values
+# but do *NOT* change the variable names.
 #
 # Creation Date: 2020-Jun-11 [Martinski W.]
-# Last Modified: 2024-Feb-18 [Martinski W.]
+# Last Modified: 2024-Aug-03 [Martinski W.]
 ####################################################################
 set -u
 
-TEST_VERSION="0.5.8"
+TEST_VERSION="0.5.17"
 
 readonly scriptFileName="${0##*/}"
 readonly scriptFileNTag="${scriptFileName%.*}"
 
-readonly CEM_LIB_TAG="master"
-readonly CEM_LIB_URL="https://raw.githubusercontent.com/Martinski4GitHub/CustomMiscUtils/${CEM_LIB_TAG}/EMail"
-
-readonly CUSTOM_EMAIL_LIBDir="/jffs/scripts/libs"
-readonly CUSTOM_EMAIL_LIBName="CustomEMailFunctions.lib.sh"
-readonly CUSTOM_EMAIL_LIBFile="${CUSTOM_EMAIL_LIBDir}/$CUSTOM_EMAIL_LIBName"
+## The shared custom email library to support email notifications ##
+readonly ADDONS_SHARED_LIBS_DIR_PATH="/jffs/addons/shared-libs"
+readonly CUSTOM_EMAIL_LIB_SCRIPT_FNAME="CustomEMailFunctions.lib.sh"
+readonly CUSTOM_EMAIL_LIB_DLSCRIPT_FNAME="DownloadCEMLibraryFile.lib.sh"
+readonly CUSTOM_EMAIL_LIB_SCRIPT_FPATH="${ADDONS_SHARED_LIBS_DIR_PATH}/$CUSTOM_EMAIL_LIB_SCRIPT_FNAME"
+readonly CUSTOM_EMAIL_LIB_DLSCRIPT_FPATH="${ADDONS_SHARED_LIBS_DIR_PATH}/$CUSTOM_EMAIL_LIB_DLSCRIPT_FNAME"
+readonly CUSTOM_EMAIL_LIB_SCRIPT_URL="https://raw.githubusercontent.com/Martinski4GitHub/CustomMiscUtils/master/EMail"
 
 #-----------------------------------------------------------#
-_DownloadCEMLibraryFile_()
+_DownloadCEMLibraryHelperFile_()
 {
-   local msgStr  retCode
-   case "$1" in
-        update) msgStr="Updating" ;;
-       install) msgStr="Installing" ;;
-             *) return 1 ;;
-   esac
-   printf "\n${msgStr} the shared library script file to support email notifications...\n"
+   local tempScriptFileDL="${CUSTOM_EMAIL_LIB_DLSCRIPT_FPATH}.DL"
 
-   mkdir -m 755 -p "$CUSTOM_EMAIL_LIBDir"
-   curl -kLSs --retry 3 --retry-delay 5 --retry-connrefused \
-   "${CEM_LIB_URL}/$CUSTOM_EMAIL_LIBName" -o "$CUSTOM_EMAIL_LIBFile"
-   curlCode="$?"
-
-   if [ "$curlCode" -eq 0 ] && [ -f "$CUSTOM_EMAIL_LIBFile" ]
+   [ ! -d "$ADDONS_SHARED_LIBS_DIR_PATH" ] && \
+   mkdir -m 755 -p "$ADDONS_SHARED_LIBS_DIR_PATH" 2>/dev/null
+   if [ ! -d "$ADDONS_SHARED_LIBS_DIR_PATH" ]
    then
-       retCode=0
-       chmod 755 "$CUSTOM_EMAIL_LIBFile"
-       . "$CUSTOM_EMAIL_LIBFile"
-       printf "\nDone.\n"
-   else
-       retCode=1
-       printf "\n**ERROR**: Unable to download the shared library script file [$CUSTOM_EMAIL_LIBName].\n"
+       printf "\n**ERROR**: Directory Path [$ADDONS_SHARED_LIBS_DIR_PATH] *NOT* FOUND.\n"
+       return 1
    fi
-   return "$retCode"
+
+   printf "\nDownloading the library helper script file to support email notifications...\n"
+
+   curl -LSs --retry 3 --retry-delay 5 --retry-connrefused \
+        ${CUSTOM_EMAIL_LIB_SCRIPT_URL}/$CUSTOM_EMAIL_LIB_DLSCRIPT_FNAME \
+        -o "$tempScriptFileDL"
+
+   if [ ! -s "$tempScriptFileDL" ] || \
+      grep -Eiq "^404: Not Found" "$tempScriptFileDL"
+   then
+       [ -s "$tempScriptFileDL" ] && { echo ; cat "$tempScriptFileDL" ; }
+       rm -f "$tempScriptFileDL"
+       printf "\n**ERROR**: Unable to download the library helper script [$CUSTOM_EMAIL_LIB_DLSCRIPT_FNAME]\n"
+       return 1
+   else
+       mv -f "$tempScriptFileDL" "$CUSTOM_EMAIL_LIB_DLSCRIPT_FPATH"
+       chmod 755 "$CUSTOM_EMAIL_LIB_DLSCRIPT_FPATH"
+       . "$CUSTOM_EMAIL_LIB_DLSCRIPT_FPATH"
+       printf "The email library helper script [$CUSTOM_EMAIL_LIB_DLSCRIPT_FNAME] was downloaded.\n"
+       return 0
+   fi
 }
 
-if [ -f "$CUSTOM_EMAIL_LIBFile" ]
-then
-   . "$CUSTOM_EMAIL_LIBFile"
+cemailLibQuietArg=""
+cemailLibCheckArg=""
+cemailDownloadHelper=false
 
-   if [ -z "${CEM_LIB_VERSION:+xSETx}" ] || \
-      _CheckLibraryUpdates_CEM_ "$CUSTOM_EMAIL_LIBDir"
-   then
-       _DownloadCEMLibraryFile_ "update"
-   fi
+for PARAM in "$@"
+do
+   case $PARAM in
+       "-verbose" | "-quiet" | "-veryquiet")
+           cemailLibQuietArg="$PARAM"
+           ;;
+       "-versionCheck")
+           cemailLibCheckArg="$PARAM"
+           ;;
+       "-download")
+          if [ $# -gt 1 ] && [ "$2" = "-cemdlhelper" ]
+          then cemailDownloadHelper=true ; fi
+          ;;
+       *) ;; #CONTINUE#
+   esac
+done
+
+if "$cemailDownloadHelper" || [ ! -s "$CUSTOM_EMAIL_LIB_DLSCRIPT_FPATH" ]
+then _DownloadCEMLibraryHelperFile_ ; fi
+
+if [ -s "$CUSTOM_EMAIL_LIB_DLSCRIPT_FPATH" ]
+then
+    . "$CUSTOM_EMAIL_LIB_DLSCRIPT_FPATH"
+    _CheckForLibraryScript_CEM_ "$cemailLibCheckArg" "$cemailLibQuietArg"
 else
-    _DownloadCEMLibraryFile_ "install"
+    printf "\n**ERROR**: Library helper script file [$CUSTOM_EMAIL_LIB_DLSCRIPT_FNAME] *NOT* FOUND.\n"
+
+    [ -s "$CUSTOM_EMAIL_LIB_SCRIPT_FPATH" ] && . "$CUSTOM_EMAIL_LIB_SCRIPT_FPATH"
 fi
 
 #-----------------------------------------------------------#
@@ -80,7 +108,7 @@ _SendEMailNotification_()
    if [ -z "${amtmIsEMailConfigFileEnabled:+xSETx}" ]
    then
        logTag="**ERROR**_${scriptFileName}_$$"
-       logMsg="Email library script [$CUSTOM_EMAIL_LIBFile] *NOT* FOUND."
+       logMsg="Email library script [$CUSTOM_EMAIL_LIB_SCRIPT_FNAME] is *NOT* loaded."
        printf "\n%s: %s\n\n" "$logTag" "$logMsg"
        /usr/bin/logger -t "$logTag" "$logMsg"
        return 1
@@ -168,5 +196,7 @@ fi
 } > "$tmpEMailBodyFile"
 
 _SendEMailNotification_ "EmailTEST" "$emailSubject" "$tmpEMailBodyFile" "$emailBodyTitle"
+
+[ -f "$tmpEMailBodyFile" ] && rm -f "$tmpEMailBodyFile"
 
 #EOF#
