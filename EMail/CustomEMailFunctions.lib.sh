@@ -3,11 +3,11 @@
 # FILENAME: CustomEMailFunctions.lib.sh
 # TAG: _LIB_CustomEMailFunctions_SHELL_
 #
-# Custom miscellaneous definitions & functions to send
-# email notifications using AMTM optional email config.
+# Custom miscellaneous definitions and functions to send
+# email notifications using AMTM email configuration file.
 #
 # Creation Date: 2020-Jun-11 [Martinski W.]
-# Last Modified: 2024-Mar-09 [Martinski W.]
+# Last Modified: 2024-Nov-13 [Martinski W.]
 ######################################################################
 
 if [ -z "${_LIB_CustomEMailFunctions_SHELL_:+xSETx}" ]
@@ -15,11 +15,12 @@ then _LIB_CustomEMailFunctions_SHELL_=0
 else return 0
 fi
 
-CEM_LIB_VERSION="0.9.16"
+CEM_LIB_VERSION="0.9.23"
 CEM_TXT_VERFILE="cemVersion.txt"
 
-CEM_LIB_SCRIPT_TAG="master"
-CEM_LIB_SCRIPT_URL="https://raw.githubusercontent.com/Martinski4GitHub/CustomMiscUtils/${CEM_LIB_SCRIPT_TAG}/EMail"
+CEM_LIB_REPO_BRANCH="master"
+CEM_LIB_SCRIPT_URL2="https://raw.githubusercontent.com/MartinSkyW/CustomMiscUtils/${CEM_LIB_REPO_BRANCH}/EMail"
+CEM_LIB_SCRIPT_URL1="https://raw.githubusercontent.com/Martinski4GitHub/CustomMiscUtils/${CEM_LIB_REPO_BRANCH}/EMail"
 
 if [ -z "${cemIsVerboseMode:+xSETx}" ]
 then cemIsVerboseMode=true ; fi
@@ -30,14 +31,11 @@ then cemIsFormatHTML=true ; fi
 if [ -z "${cemIsDebugMode:+xSETx}" ]
 then cemIsDebugMode=false ; fi
 
-if [ -z "${cemDoSystemLogFile:+xSETx}" ]
-then cemDoSystemLogFile=true ; fi
+if [ -z "${cemDoSystemLog:+xSETx}" ]
+then cemDoSystemLog=true ; fi
 
 if [ -z "${cemDeleteMailContentFile:+xSETx}" ]
 then cemDeleteMailContentFile=true ; fi
-
-if [ -z "${cemSendEMailNotificationsFlag:+xSETx}" ]
-then cemSendEMailNotificationsFlag=true ; fi
 
 cemScriptDirPath="$(/usr/bin/dirname "$0")"
 cemScriptFileName="${0##*/}"
@@ -74,36 +72,44 @@ PASSWORD=""  emailPwEnc=""
 # Custom Additions ##
 CC_NAME=""  CC_ADDRESS=""
 
-if [ -f "$amtmEMailConfFile" ]
+if [ -s "$amtmEMailConfFile" ]
 then
-    . "$amtmEMailConfFile"
-else
-    cemSendEMailNotificationsFlag=false
+   dos2unix "$amtmEMailConfFile"
+   . "$amtmEMailConfFile"
 fi
 
-#-------------------------------------------------------#
+#-----------------------------------------------------------#
 _DoReInit_CEM_()
 {
    unset amtmIsEMailConfigFileEnabled \
-         cemSendEMailNotificationsFlag \
          _LIB_CustomEMailFunctions_SHELL_
 }
 
 #-----------------------------------------------------------#
+_PrintMsg_CEM_()
+{ "$cemIsInteractive" && printf "${1}" ; }
+
+#-----------------------------------------------------------#
 _LogMsg_CEM_()
 {
-   if ! "$cemDoSystemLogFile" || \
-      [ $# -lt 2 ] || [ -z "$1" ] || [ -z "$2" ]
+   if [ $# -lt 2 ] || [ -z "$1" ] || [ -z "$2" ]
    then return 1 ; fi
-   $cemSysLogger -t "$1" "$2"
 
    "$cemIsInteractive" && "$cemIsVerboseMode" && \
    printf "${1}: ${2}\n"
+
+   "$cemDoSystemLog" && $cemSysLogger -t "$1" "$2"
 }
 
 #-----------------------------------------------------------#
 _CheckLibraryUpdates_CEM_()
 {
+   if [ $# -eq 0 ] || [ -z "$1" ]
+   then
+       _PrintMsg_CEM_ "\n**ERROR**: NO parameter given for directory path.\n"
+       return 1
+   fi
+
    _VersionStrToNum_()
    {
       if [ $# -eq 0 ] || [ -z "$1" ] ; then echo 0 ; return 1 ; fi
@@ -114,49 +120,90 @@ _CheckLibraryUpdates_CEM_()
       verNum="$(echo "$verNum" | sed 's/^0*//')"
       echo "$verNum" ; return 0
    }
-   if [ $# -eq 0 ] || [ -z "$1" ] || [ ! -d "$1" ]
+
+   _DownloadLibVersionFile_()
+   {
+      if [ $# -lt 2 ] || [ -z "$1" ] || [ -z "$2" ] ; then return 1 ; fi
+
+      curl -LSs --retry 4 --retry-delay 5 --retry-connrefused \
+           "${1}/$CEM_TXT_VERFILE" -o "$theVersTextFile"
+
+      if [ ! -s "$theVersTextFile" ] || \
+         grep -Eiq "^404: Not Found" "$theVersTextFile"
+      then
+          if [ "$2" -eq "$urlDLMax" ] || "$showAllMsgs" || "$showWarnings"
+          then
+              [ -s "$theVersTextFile" ] && { echo ; cat "$theVersTextFile" ; }
+              _PrintMsg_CEM_ "\n**WARNING**: Unable to download the version file [$CEM_TXT_VERFILE]\n"
+              [ "$2" -lt "$urlDLMax" ] && _PrintMsg_CEM_ "Trying again with a different URL...\n"
+          fi
+          rm -f "$theVersTextFile"
+          return 1
+      else
+          if "$showAllMsgs" || { [ "$2" -gt 1 ] && "$showWarnings" ; }
+          then
+              [ "$2" -gt 1 ] && echo
+              _PrintMsg_CEM_ "The email library version file [$CEM_TXT_VERFILE] was downloaded.\n"
+          fi
+          return 0
+      fi
+   }
+
+   mkdir -m 755 -p "$1"
+   if [ ! -d "$1" ]
    then
-       "$cemIsInteractive" && \
-       printf "\n**ERROR**: INVALID parameter for directory [$1]\n"
+       _PrintMsg_CEM_ "\n**ERROR**: Directory Path [$1] *NOT* FOUND.\n"
        return 0
    fi
    local theVersTextFile="${1}/$CEM_TXT_VERFILE"
-   local libraryVerNum  dlCheckVerNum  dlCheckVerStr
-   local showMsg  retCode
+   local libraryVerNum  dlFileVersNum  dlFileVersStr
+   local showAllMsgs="$cemIsVerboseMode"  showWarnings=true
+   local retCode  urlDLCount  urlDLMax
 
-   if [ $# -gt 1 ] && echo "$2" | grep -qE "^[-]?quiet$"
-   then showMsg=false ; else showMsg=true ; fi
+   if [ $# -gt 1 ]
+   then
+       if echo "$2" | grep -qE "^[-]?quiet$"
+       then showAllMsgs=false
+       elif [ "$2" = "-veryquiet" ]
+       then showAllMsgs=false ; showWarnings=false
+       fi
+   fi
 
-   "$cemIsInteractive" && "$cemIsVerboseMode" && "$showMsg" && \
-   printf "\nChecking for shared library script updates...\n"
+   "$showAllMsgs" && \
+   _PrintMsg_CEM_ "\nChecking for the shared email library script updates...\n"
 
-   curl -kLSs --retry 3 --retry-delay 5 --retry-connrefused \
-   "${CEM_LIB_SCRIPT_URL}/$CEM_TXT_VERFILE" -o "$theVersTextFile"
+   retCode=1 ; urlDLCount=0 ; urlDLMax=2
+   for cemLibScriptURL in "$CEM_LIB_SCRIPT_URL1" "$CEM_LIB_SCRIPT_URL2"
+   do
+       urlDLCount="$((urlDLCount + 1))"
+       if _DownloadLibVersionFile_ "$cemLibScriptURL"  "$urlDLCount"
+       then retCode=0 ; break ; fi
+   done
+   [ "$retCode" -ne 0 ] && return "$retCode"
 
-   [ ! -f "$theVersTextFile" ] && return 1
    chmod 666 "$theVersTextFile"
-   dlCheckVerStr="$(cat "$theVersTextFile")"
+   dlFileVersStr="$(cat "$theVersTextFile")"
 
-   dlCheckVerNum="$(_VersionStrToNum_ "$dlCheckVerStr")"
+   dlFileVersNum="$(_VersionStrToNum_ "$dlFileVersStr")"
    libraryVerNum="$(_VersionStrToNum_ "$CEM_LIB_VERSION")"
 
-   if [ "$dlCheckVerNum" -le "$libraryVerNum" ]
+   if [ "$dlFileVersNum" -le "$libraryVerNum" ]
    then
        retCode=1
-       "$cemIsInteractive" && "$cemIsVerboseMode" && "$showMsg" && \
-       printf "\nDone.\n"
+       "$showAllMsgs" && \
+       _PrintMsg_CEM_ "Update check done.\n"
    else
        _DoReInit_CEM_
        retCode=0
-       "$cemIsInteractive" && "$cemIsVerboseMode" && "$showMsg" && \
-       printf "\nNew library version update [$dlCheckVerStr] available.\n"
+       "$showAllMsgs" && \
+       _PrintMsg_CEM_ "New email library script version [$dlFileVersStr] is available.\n"
    fi
 
    rm -f "$theVersTextFile"
    return "$retCode"
 }
 
-#-------------------------------------------------------#
+#-----------------------------------------------------------#
 _GetRouterModelID_CEM_()
 {
    local retCode=1  routerModelID=""
@@ -169,35 +216,36 @@ _GetRouterModelID_CEM_()
    echo "$routerModelID" ; return "$retCode"
 }
 
-#-------------------------------------------------------#
+#-----------------------------------------------------------#
 CheckEMailConfigFileFromAMTM_CEM_()
 {
-   local logMsg
    amtmIsEMailConfigFileEnabled=false
 
-   if [ ! -f "$amtmEMailConfFile" ] || [ ! -f "$amtmEMailPswdFile" ]
+   if [ ! -s "$amtmEMailConfFile" ]
    then
-       if "$cemIsInteractive"
-       then
-           printf "\n**ERROR**: Unable to send email notifications."
-           printf "\nEmail configuration file is not yet set up or password has not been defined.\n"
-       fi
+       _PrintMsg_CEM_ "\n**ERROR**: Unable to send email notifications."
+       _PrintMsg_CEM_ "\nAMTM email configuration file is not yet set up.\n"
+       return 1
+   fi
+
+   if [ ! -s "$amtmEMailPswdFile" ] || [ -z "$emailPwEnc" ] || \
+      [ "$PASSWORD" = "PUT YOUR PASSWORD HERE" ]
+   then
+       _PrintMsg_CEM_ "\n**ERROR**: Unable to send email notifications."
+       _PrintMsg_CEM_ "\nThe AMTM email password has not been set up.\n"
        return 1
    fi
 
    if [ -z "$TO_NAME" ] || [ -z "$USERNAME" ] || \
       [ -z "$FROM_ADDRESS" ] || [ -z "$TO_ADDRESS" ] || \
-      [ -z "$SMTP" ] || [ -z "$PORT" ] || [ -z "$PROTOCOL" ] || \
-      [ -z "$emailPwEnc" ] || [ "$PASSWORD" = "PUT YOUR PASSWORD HERE" ]
+      [ -z "$SMTP" ] || [ -z "$PORT" ] || [ -z "$PROTOCOL" ]
    then
-       if "$cemIsInteractive"
-       then
-           printf "\n**ERROR**: Unable to send email notifications."
-           printf "\nSome email configuration variables are not yet set up.\n"
-       fi
+       _PrintMsg_CEM_ "\n**ERROR**: Unable to send email notifications."
+       _PrintMsg_CEM_ "\nSome AMTM email configuration variables are not yet set up.\n"
        return 1
    fi
 
+   chmod 640 "$amtmEMailConfFile" "$amtmEMailPswdFile"
    amtmIsEMailConfigFileEnabled=true
    return 0
 }
@@ -235,7 +283,7 @@ _CreateEMailContent_CEM_()
         fi
     else
         emailBodyMsge="$(echo "$emailBodyMsge" | sed 's/[<]b[>]//g ; s/[<]\/b[>]//g')"
-        emailBodyTitle="$(echo "$emailBodyMsge" | sed 's/[<]h[1-5][>]//g ; s/[<]\/h[1-5][>]//g')"
+        emailBodyTitle="$(echo "$emailBodyTitle" | sed 's/[<]h[1-5][>]//g ; s/[<]\/h[1-5][>]//g')"
     fi
 
     if [ -n "$CC_NAME" ] && [ -n "$CC_ADDRESS" ]
@@ -317,11 +365,10 @@ EOF
 _SendEMailNotification_CEM_()
 {
    if [ $# -lt 2 ] || [ -z "$1" ] || [ -z "$2" ] || \
-      ! "$cemSendEMailNotificationsFlag" || \
       ! CheckEMailConfigFileFromAMTM_CEM_
    then return 1 ; fi
 
-   local logTag  logMsg
+   local logTag  logMsg  curlCode
    local CC_ADDRESS_STR=""  CC_ADDRESS_ARG=""
 
    [ -z "$FROM_NAME" ] && FROM_NAME="$cemScriptFNameTag"
@@ -337,7 +384,7 @@ _SendEMailNotification_CEM_()
 
    date +"$cemDateTimeFormat" > "$cemTempEMailLogFile"
 
-   /usr/sbin/curl -v --url "${PROTOCOL}://${SMTP}:${PORT}" \
+   /usr/sbin/curl -v --retry 4 --retry-delay 5 --url "${PROTOCOL}://${SMTP}:${PORT}" \
    --mail-from "$FROM_ADDRESS" --mail-rcpt "$TO_ADDRESS" $CC_ADDRESS_ARG \
    --user "${USERNAME}:$(/usr/sbin/openssl aes-256-cbc "$emailPwEnc" -d -in "$amtmEMailPswdFile" -pass pass:ditbabot,isoi)" \
    --upload-file "$cemTempEMailContent" \
@@ -349,7 +396,7 @@ _SendEMailNotification_CEM_()
        sleep 2
        rm -f "$cemTempEMailLogFile"
        logTag="$cemLogInfoTag"
-       logMsg="The email notification was sent successfully."
+       logMsg="The email notification was sent successfully [$cemScriptFNameTag]."
    else
        logTag="$cemLogErrorTag"
        logMsg="**ERROR**: Failure to send email notification [Code: $curlCode]."
@@ -360,8 +407,8 @@ _SendEMailNotification_CEM_()
            echo "======================================================="
        fi
    fi
-   "$cemDeleteMailContentFile" && rm -f "$cemTempEMailContent"
    _LogMsg_CEM_ "$logTag" "$logMsg"
+   "$cemDeleteMailContentFile" && rm -f "$cemTempEMailContent"
 
    return "$curlCode"
 }
